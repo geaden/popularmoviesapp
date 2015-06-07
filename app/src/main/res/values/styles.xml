@@ -1,0 +1,32 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+    </style>
+
+    <!-- Base Movie Text Style -->
+    <style name="Movie.BaseText" parent="TextAppearance.AppCompat">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textSize">@dimen/movie_empty_text_size</item>
+        <item name="android:padding">@dimen/movie_empty_padding</item>
+    </style>
+
+    <!-- Empty Movie Text Style -->
+    <style name="Movie.Empty" parent="Movie.BaseText">
+        <item name="android:gravity">center_horizontal</item>
+        <item name="android:textSize">@dimen/movie_title_size</item>
+    </style>
+
+    <!-- Movie title style in a list view -->
+    <style name="Movie.Title" parent="Movie.BaseText">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textSize">@dimen/movie_title_size</item>
+    </style>
+
+    <!-- Movie overview style in a list view -->
+    <style name="Movie.Overview" parent="Movie.BaseText">
+        <item name="android:textSize">@dimen/movie_overview_size</item>
+        <item name="android:paddingTop">@dimen/movie_overview_padding_top</item>
+    </style>
+</resources>
