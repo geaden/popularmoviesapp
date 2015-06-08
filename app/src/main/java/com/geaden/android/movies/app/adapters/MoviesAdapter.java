@@ -1,20 +1,14 @@
 package com.geaden.android.movies.app.adapters;
 
 import android.content.Context;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.RatingBar;
-import android.widget.TextView;
-
-import com.geaden.android.movies.app.R;
 import com.geaden.android.movies.app.models.Movie;
 import com.squareup.picasso.Picasso;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -22,44 +16,43 @@ import java.util.List;
  *
  * @author Gennady Denisov
  */
-public class MoviesAdapter extends ArrayAdapter<Movie> {
-    private int layout;
+public class MoviesAdapter extends BaseAdapter {
+    private static final float IMAGE_WIDTH = 185;
+    private Context mContext;
+    private List<Movie> mMovies;
 
-    public MoviesAdapter(Context context, int resource, List<Movie> movies) {
-        super(context, resource, movies);
-        layout = resource;
+    public MoviesAdapter(Context context, List<Movie> movies) {
+        mContext = context;
+        mMovies = movies;
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         Movie movie = getItem(position);
-        ViewHolder holder;
+        ImageView imageView;
         if (convertView == null) {
-            convertView = LayoutInflater.from(getContext()).inflate(layout, parent, false);
-            holder = new ViewHolder(convertView);
-            convertView.setTag(holder);
+            // if it's not recycled, initialize some attributes
+            imageView = new ImageView(mContext);
+            // TODO: Calculate correct image size
         } else {
-            holder = (ViewHolder) convertView.getTag();
+            imageView = (ImageView) convertView;
         }
-        Picasso.with(getContext()).load(movie.getPosterPath()).into(holder.poster);
-        holder.poster.setContentDescription(movie.getTitle());
-        holder.title.setText(movie.getTitle());
-        holder.overview.setText(movie.getOverview());
-        holder.rating.setRating(movie.getRating(getContext()));
-        return convertView;
+        Picasso.with(mContext).load(movie.getPosterPath()).into(imageView);
+        return imageView;
     }
 
-    private class ViewHolder {
-        ImageView poster;
-        TextView title;
-        TextView overview;
-        RatingBar rating;
+    @Override
+    public int getCount() {
+        return mMovies.size();
+    }
 
-        ViewHolder(View v) {
-            poster = (ImageView) v.findViewById(R.id.movie_poster);
-            title = (TextView) v.findViewById(R.id.movie_title);
-            overview = (TextView) v.findViewById(R.id.movie_overview);
-            rating = (RatingBar) v.findViewById(R.id.movie_rating);
-        }
+    @Override
+    public Movie getItem(int position) {
+        return mMovies.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return 0;
     }
 }

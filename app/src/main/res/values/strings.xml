@@ -1,9 +1,24 @@
 <resources>
     <string name="app_name">Popular Movies App</string>
     <string name="action_settings">Settings</string>
-    <string name="movie_title">Chappie</string>
-    <string name="movie_overview">Every child comes into the world full of promise, and none more so than Chappie: he is gifted, special, a prodigy. Like any child, Chappie will come under the influence of his surroundings—some good, some bad—and he will rely on his heart and soul to find his way in the world and become his own man. But there\'s one thing that makes Chappie different from any one else: he is a robot.</string>
     <string name="movies_not_available">Movies not available</string>
     <string name="movie_rating_stars">4</string>
     <string name="movie_rating_step">0.1</string>
+    <string name="pref_sort_key">sort</string>
+    <string name="pref_sort_title">Sort order</string>
+
+    <!-- Preferences specific -->
+    <!-- Possible ways to sort movies grid -->
+    <string-array name="sort_by">
+        <item>Most popular</item>
+        <item>Highest rated</item>
+    </string-array>
+    <!-- Values for the selected sorting. Should correspond to the string array -->
+    <string-array name="sort_by_values">
+        <item>popularity.desc</item>
+        <item>voted_average.desc</item>
+    </string-array>
+    <!-- Default sort order -->
+    <string name="pref_default_sort_order">Most popular</string>
+    <string name="pref_default_sort_order_value">popularity.desc</string>
 </resources>

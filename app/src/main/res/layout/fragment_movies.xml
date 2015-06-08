@@ -9,14 +9,17 @@
         android:id="@+id/movies_empty"
         android:text="@string/movies_not_available"
         style="@style/Movie.Empty"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <ListView
-        android:id="@+id/movies_list"
-        android:minHeight="?attr/listPreferredItemHeightLarge"
+    <GridView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/movies_grid"
         android:layout_width="match_parent"
-        tools:listitem="@layout/movie_list_item"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:numColumns="auto_fit"
+        android:verticalSpacing="1dp"
+        android:horizontalSpacing="1dp"
+        android:stretchMode="columnWidth"
+        android:gravity="center"/>
 
 </RelativeLayout>
