@@ -20,5 +20,11 @@
     </string-array>
     <!-- Default sort order -->
     <string name="pref_default_sort_order">Most popular</string>
-    <string name="pref_default_sort_order_value">popularity.desc</string>
+    <string name="pref_default_sort_order_value" translatable="false">popularity.desc</string>
+
+    <!-- SyncAdapter related -->
+    <string name="sync_account_type">movies.geaden.com</string>
+    <string name="content_authority" translatable="false">com.geaden.android.movies.app</string>
+    <string name="pref_conn_status_key">connection_status</string>
+
 </resources>

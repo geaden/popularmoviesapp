@@ -51,14 +51,8 @@ public class RestClient {
      * Gets list of movies by calling TMDB Api
      * @return list of Movie
      */
-    public List<Movie> queryMovies(String sortOrder) {
-        try {
-            MovieResponse resp = sService.queryMovies(sortOrder, TMDB_API_KEY);
-            return resp.getMovies();
-        } catch (UnauthorizedException e) {
-            Log.e(LOG_TAG, "Authorization needed", e);
-        }
-        return null;
+    public List<Movie> queryMovies(String sortOrder) throws UnauthorizedException{
+        MovieResponse resp = sService.queryMovies(sortOrder, TMDB_API_KEY);
+        return resp.getMovies();
     }
-
 }

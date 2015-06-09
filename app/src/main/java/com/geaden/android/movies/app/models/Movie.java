@@ -32,6 +32,7 @@ public class Movie {
     @SerializedName("vote_count")
     private int voteCount;
     private String overview;
+    private float popularity;
 
     public Movie() {
 
@@ -71,6 +72,10 @@ public class Movie {
 
     public int getVoteCount() {
         return voteCount;
+    }
+
+    public float getPopularity() {
+        return popularity;
     }
 
     public String getOverview() {
