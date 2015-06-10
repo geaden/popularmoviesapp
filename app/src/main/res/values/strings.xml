@@ -1,30 +1,28 @@
 <resources>
     <string name="app_name">Popular Movies App</string>
     <string name="action_settings">Settings</string>
-    <string name="movies_not_available">Movies not available</string>
-    <string name="movie_rating_stars">4</string>
-    <string name="movie_rating_step">0.1</string>
-    <string name="pref_sort_key">sort</string>
-    <string name="pref_sort_title">Sort order</string>
+    <string name="empty_movie_list">Movies not available</string>
+    <string name="movie_rating_stars" translatable="false">4</string>
+    <string name="movie_rating_step" translatable="false">0.1</string>
 
     <!-- Preferences specific -->
-    <!-- Possible ways to sort movies grid -->
-    <string-array name="sort_by">
-        <item>Most popular</item>
-        <item>Highest rated</item>
-    </string-array>
-    <!-- Values for the selected sorting. Should correspond to the string array -->
-    <string-array name="sort_by_values">
-        <item>popularity.desc</item>
-        <item>voted_average.desc</item>
-    </string-array>
+    <string name="pref_sort_key" translatable="false">sort</string>
+    <string name="pref_sort_title">Sort order</string>
+    <string name="pref_conn_status_key" translatable="false">connection_status</string>
+    <string name="pref_sort_popularity" translatable="false">popularity.desc</string>
+    <string name="pref_sort_rating" translatable="false">vote_average.desc</string>
+    <string name="pref_sort_popularity_title">Most popular</string>
+    <string name="pref_sort_rating_title">Highest rated</string>
     <!-- Default sort order -->
-    <string name="pref_default_sort_order">Most popular</string>
-    <string name="pref_default_sort_order_value" translatable="false">popularity.desc</string>
+    <string name="pref_default_sort_order_value">@string/pref_sort_popularity</string>
 
     <!-- SyncAdapter related -->
-    <string name="sync_account_type">movies.geaden.com</string>
+    <string name="sync_account_type" translatable="false">movies.geaden.com</string>
     <string name="content_authority" translatable="false">com.geaden.android.movies.app</string>
-    <string name="pref_conn_status_key">connection_status</string>
+    <string name="empty_movie_list_server_down">Movies not available. Server is down.</string>
+    <string name="empty_movie_list_list_server_error">Movies not available. Server error.</string>
+    <string name="empty_movie_list_connection_unknown">Movies not available. Unknown error.</string>
+    <string name="empty_movie_list_no_network">Movies not available. No network.</string>
+    <string name="empty_movie_list_syncing">Movies are syncing...</string>
 
 </resources>

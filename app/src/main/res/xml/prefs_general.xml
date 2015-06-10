@@ -9,5 +9,4 @@
         android:defaultValue="@string/pref_default_sort_order_value"
         android:entryValues="@array/sort_by_values"/>
 
-
 </PreferenceScreen>

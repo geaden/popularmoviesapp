@@ -7,8 +7,17 @@
 
     <TextView
         android:id="@+id/movies_empty"
-        android:text="@string/movies_not_available"
+        android:text="@string/empty_movie_list"
         style="@style/Movie.Empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <ProgressBar
+        style="?android:attr/progressBarStyleLarge"
+        android:id="@+id/movies_progressbar"
+        android:visibility="gone"
+        tools:visiblity="visible"
+        android:layout_below="@id/movies_empty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
@@ -20,6 +29,7 @@
         android:verticalSpacing="1dp"
         android:horizontalSpacing="1dp"
         android:stretchMode="columnWidth"
+        tools:listitem="@layout/movie_grid_item"
         android:gravity="center"/>
 
 </RelativeLayout>

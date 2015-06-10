@@ -2,7 +2,11 @@ package com.geaden.android.movies.app;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
+
+import com.geaden.android.movies.app.sync.MovieSyncAdapter;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -27,12 +31,39 @@ public class Utility {
 
     /**
      * Formats a data according to format
-     * @param date the date to format
-     * @param format the format
-     * @return string represenation of date according to format
+     * @param date the date to format. If null, then null is returned.
+     * @param format the provided format
+     * @return string representation of date according to the provided format
      */
     static public String formatDate(Date date, String format) {
+        if (date == null) {
+            return null;
+        }
         DateFormat df = new SimpleDateFormat(format);
         return df.format(date);
+    }
+
+    /**
+     * Gets the connection status
+     * @param context the Context to get Preferences from
+     * @return the connection status
+     */
+    @SuppressWarnings("ResourceType")
+    static public @MovieSyncAdapter.ConnectionStatus int getConnectionStatus(Context context) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        return sp.getInt(context.getString(R.string.pref_conn_status_key),
+                MovieSyncAdapter.CONNECTION_UNKOWN);
+    }
+
+    /**
+     * Returns true if the network is available or about to become available
+     *
+     * @param c Context used to the ConnectivityManager
+     * @return
+     */
+    static public boolean isNetworkAvailable(Context c) {
+        ConnectivityManager cm = (ConnectivityManager) c.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 }

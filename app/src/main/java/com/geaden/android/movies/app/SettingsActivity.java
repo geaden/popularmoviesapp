@@ -6,6 +6,7 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import com.geaden.android.movies.app.sync.MovieSyncAdapter;
 
 /**
  * Movies activity screen.
@@ -79,6 +80,8 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        // TODO: Manage movies data based on sort order
+        if (key.equals(getString(R.string.pref_sort_key))) {
+            MovieSyncAdapter.syncImmediately(this);
+        }
     }
 }

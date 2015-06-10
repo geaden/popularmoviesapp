@@ -33,7 +33,6 @@ public class MovieDbHelper extends SQLiteOpenHelper {
         return sInstance;
     }
 
-
     @Override
     public void onCreate(SQLiteDatabase db) {
         // Create a table to hold movie data
@@ -48,7 +47,7 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                 MovieEntry.COLUMN_POPULARITY + " REAL NOT NULL, " +
                 MovieEntry.COLUMN_VOTE_AVG + " REAL NOT NULL, " +
                 MovieEntry.COLUMN_VOTE_COUNT + " INTEGER NOT NULL, " +
-                MovieEntry.COLUMN_RELEASE_DATE + " TEXT NOT NULL);";
+                MovieEntry.COLUMN_RELEASE_DATE + " TEXT);";
         db.execSQL(SQL_CREATE_MOVIE_TABLE);
     }
 

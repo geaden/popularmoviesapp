@@ -6,6 +6,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.geaden.android.movies.app.sync.MovieSyncAdapter;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -13,6 +15,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // make sure we've gotten an account created and we're syncing
+        MovieSyncAdapter.initializeSyncAdapter(this);
     }
 
 

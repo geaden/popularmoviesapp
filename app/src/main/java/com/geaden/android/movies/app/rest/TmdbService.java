@@ -19,5 +19,5 @@ public interface TmdbService {
      */
     @GET("/discover/movie")
     MovieResponse queryMovies(
-            @Query("sort_by") String sortBy, @Query("api_key") String apiKey) throws UnauthorizedException;
+            @Query("sort_by") String sortBy, @Query("api_key") String apiKey) throws Throwable;
 }

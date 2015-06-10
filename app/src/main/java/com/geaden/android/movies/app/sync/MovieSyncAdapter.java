@@ -1,12 +1,16 @@
 package com.geaden.android.movies.app.sync;
 
 import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.SyncRequest;
 import android.content.SyncResult;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.IntDef;
@@ -32,13 +36,23 @@ import java.util.Vector;
 public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     private static final String LOG_TAG = MovieSyncAdapter.class.getSimpleName();
 
-    private static final int CONNECTION_OK = 0;
-    private static final int CONNECTION_SERVER_DOWN = 1;
-    private static final int CONNECTION_SERVER_INVALID = 2;
-    private static final int CONNECTION_UNKNOWN = 3;
+    public static final int CONNECTION_OK = 0;
+    public static final int CONNECTION_SERVER_DOWN = 1;
+    public static final int CONNECTION_SERVER_INVALID = 2;
+    public static final int CONNECTION_UNKOWN = 3;
+    public static final int CONNECTION_SYNC = 4;
+
+    // Interval at which to sync with the weather, in milliseconds.
+    // 1000 milliseconds (1 second) * 60 seconds (1 minute) * 180 = 3 hours
+    public static final int SYNC_INTERVAL = 60 * 180;
+    public static final int SYNC_FLEXTIME = SYNC_INTERVAL / 3;
 
     @Retention(RetentionPolicy.SOURCE)
-    @IntDef({CONNECTION_OK, CONNECTION_SERVER_DOWN, CONNECTION_SERVER_INVALID, CONNECTION_UNKNOWN})
+    @IntDef({CONNECTION_OK,
+            CONNECTION_SERVER_DOWN,
+            CONNECTION_SERVER_INVALID,
+            CONNECTION_UNKOWN,
+            CONNECTION_SYNC})
     public @interface ConnectionStatus {}
 
     public MovieSyncAdapter(Context context, boolean autoInitialize) {
@@ -48,13 +62,105 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(LOG_TAG, "Starting sync");
+        setConnectionStatus(getContext(), CONNECTION_SYNC);
         String sortOrder = Utility.getPreferredSortOrder(getContext());
         try {
             List<Movie> movieList = RestClient.getsInstance().queryMovies(sortOrder);
             addMovies(movieList);
         } catch (UnauthorizedException e) {
             Log.e(LOG_TAG, "Error retrieving movies", e);
-            setConnectionStatus(getContext(), CONNECTION_UNKNOWN);
+            setConnectionStatus(getContext(), CONNECTION_UNKOWN);
+        } catch (Throwable e) {
+            Log.e(LOG_TAG, "Unknown server error", e);
+            setConnectionStatus(getContext(), CONNECTION_UNKOWN);
+        }
+    }
+
+    /**
+     * Helper method to have the sync adapter sync immediately
+     * @param context An app context
+     */
+    public static void syncImmediately(Context context) {
+        Bundle bundle = new Bundle();
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+         /*
+         * Request the sync for the default account, authority, and
+         * manual sync settings
+         */
+        ContentResolver.requestSync(getSyncAccount(context),
+                context.getResources().getString(R.string.content_authority),
+                bundle);
+    }
+
+    /**
+     * Helper method to get the fake account to be used with SyncAdapter, or make a new one
+     * if the account doesn't exist yet.
+     *
+     * @param context The context used to access the account service
+     * @return a fake account.
+     */
+    public static Account getSyncAccount(Context context) {
+        // Get an instance of the Android account manager
+        AccountManager accountManager =
+                (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
+
+        // Create the account type and default account
+        Account newAccount = new Account(
+                context.getString(R.string.app_name), context.getString(R.string.sync_account_type)
+        );
+
+        // If the password doesn't exist, the account doesn't exist
+        if (null == accountManager.getPassword(newAccount)) {
+            // Add the account and account type, no password or user data
+            // If successful, return the Account object, otherwise report an error
+            if (!accountManager.addAccountExplicitly(newAccount, "", null)) {
+                return null;
+            }
+
+            // If you don't set android:syncable="true" in
+            // your <provider> element in the manifest,
+            // then call context.setIsSyncable(account, AUTHORITY, 1)
+            // here.
+            onAccountCreated(newAccount, context);
+        }
+        return newAccount;
+    }
+
+    private static void onAccountCreated(Account newAccount, Context context) {
+
+        // Schedule the sync for periodic execution
+        MovieSyncAdapter.configurePeriodicSync(context, SYNC_INTERVAL, SYNC_FLEXTIME);
+
+        // Without calling setSyncAutomatically, our periodic sync will not be enabled.
+        ContentResolver.setSyncAutomatically(newAccount,
+                context.getString(R.string.content_authority), true);
+
+        // Let's do a sync to get things started.
+        syncImmediately(context);
+    }
+
+    public static void initializeSyncAdapter(Context context) {
+        getSyncAccount(context);
+    }
+
+    /**
+     * Helper method to schedule the sync adapter periodic execution
+     */
+    public static void configurePeriodicSync(Context context, int syncInterval, int flexTime) {
+
+        Account account = getSyncAccount(context);
+        String authority = context.getString(R.string.content_authority);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            // we can enable inexact timers in our periodic sync
+            SyncRequest request = new SyncRequest.Builder().
+                    syncPeriodic(syncInterval, flexTime).
+                    setSyncAdapter(account, authority).
+                    setExtras(new Bundle()).build();
+            ContentResolver.requestSync(request);
+        } else {
+            ContentResolver.addPeriodicSync(account,
+                    authority, new Bundle(), syncInterval);
         }
     }
 
@@ -63,7 +169,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
      * @param movieList the list of movies
      */
     private void addMovies(List<Movie> movieList) {
-        // Insert the new movies dat into the database
+        // Insert the new movies data into the database
         Vector<ContentValues> cVVector = new Vector<ContentValues>(movieList.size());
         for (Movie movie : movieList) {
             ContentValues cv = new ContentValues();
@@ -88,7 +194,6 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
             ContentValues[] cvArray = new ContentValues[cVVector.size()];
             cVVector.toArray(cvArray);
             getContext().getContentResolver().bulkInsert(MovieEntry.CONTENT_URI, cvArray);
-            // TODO: Notify user?
         }
         Log.d(LOG_TAG, "Sync Complete. " + cVVector.size() + " inserted");
         setConnectionStatus(getContext(), CONNECTION_OK);

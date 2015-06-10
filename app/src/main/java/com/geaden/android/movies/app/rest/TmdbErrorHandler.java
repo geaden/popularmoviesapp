@@ -15,9 +15,11 @@ public class TmdbErrorHandler implements ErrorHandler {
     @Override
     public Throwable handleError(RetrofitError cause) {
         Response r = cause.getResponse();
+        // TODO: Handler more errors
         if (r != null && r.getStatus() == HttpURLConnection.HTTP_UNAUTHORIZED) {
             return new UnauthorizedException(cause);
+        } else {
+            return new Throwable("Unknown server error.");
         }
-        return cause;
     }
 }
