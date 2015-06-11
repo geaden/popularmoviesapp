@@ -26,9 +26,20 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".MovieDetailActivity"
+            android:label="@string/movie_detail_title"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.geaden.android.movies.app.MainActivity" />
+        </activity>
+        <activity
             android:name=".SettingsActivity"
             android:label="@string/action_settings"
             android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.geaden.android.movies.app.MainActivity" />
         </activity>
         
         <!-- Movie Content Provider -->

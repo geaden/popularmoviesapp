@@ -82,14 +82,4 @@ public class Movie {
         return overview;
     }
 
-    /**
-     * Gets movie rating according to max allowed stars
-     * @param c the Context to get max stars from
-     * @return normalized rating
-     */
-    public float getRating(Context c) {
-        int maxVote = 10;
-        int maxStars = Integer.parseInt(c.getString(R.string.movie_rating_stars));
-        return voteAvg * maxStars / maxVote;
-    }
 }

@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="movie_rating">#FF0</color>
+
+    <!-- Material design colors -->
+    <color name="color_primary">#4CAF50</color>
+    <color name="color_primary_dark">#1B5E20</color>
+    <color name="color_primary_light">#E8F5E9</color>
+    <color name="accent">#00C853</color>
 </resources>

@@ -1,5 +1,6 @@
 package com.geaden.android.movies.app;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.preference.PreferenceManager;
@@ -15,7 +16,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.geaden.android.movies.app.adapters.MoviesAdapter;
 import com.geaden.android.movies.app.data.MovieContract;
@@ -25,7 +25,7 @@ import com.geaden.android.movies.app.sync.MovieSyncAdapter;
 /**
  * Movies list fragment.
  */
-public class MoviesGridFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
+public class MovieGridFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
         SharedPreferences.OnSharedPreferenceChangeListener {
 
     protected GridView mMoviesGrid;
@@ -36,7 +36,7 @@ public class MoviesGridFragment extends Fragment implements LoaderManager.Loader
     private String LOG_TAG = getClass().getSimpleName();
 
     /** Movie column projection **/
-    private final String[] MOVIE_PROJECTION = {
+    public static final String[] MOVIE_PROJECTION = {
             MovieContract.MovieEntry._ID,
             MovieContract.MovieEntry.COLUMN_MOVIE_ID,
             MovieContract.MovieEntry.COLUMN_TITLE,
@@ -59,7 +59,7 @@ public class MoviesGridFragment extends Fragment implements LoaderManager.Loader
     public final static int POSTER_PATH = 7;
     public final static int BACKDROP_PATH = 8;
 
-    public MoviesGridFragment() {
+    public MovieGridFragment() {
     }
 
     @Override
@@ -76,9 +76,10 @@ public class MoviesGridFragment extends Fragment implements LoaderManager.Loader
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Cursor cursor = mMoviesAdapter.getCursor();
                 if (cursor != null && cursor.moveToPosition(position)) {
-                    // TODO: Start movie detail activity
-                    String title = cursor.getString(TITLE);
-                    Toast.makeText(getActivity(), title, Toast.LENGTH_SHORT).show();
+                    long movieId = cursor.getLong(_ID);
+                    Intent intent = new Intent(getActivity(), MovieDetailActivity.class);
+                    intent.putExtra(MovieDetailFragment.MOVIE_DETAIL_ID, movieId);
+                    startActivity(intent);
                 }
             }
         });

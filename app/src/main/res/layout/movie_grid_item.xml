@@ -6,7 +6,7 @@
     <!-- Movie poster -->
     <ImageView
         android:id="@+id/movie_poster"
-        android:layout_width="wrap_content"
+        android:layout_width="@dimen/movie_poster_size"
         tools:src="@drawable/poster"
         android:scaleType="fitCenter"
         android:layout_height="wrap_content"

@@ -66,4 +66,17 @@ public class Utility {
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
+
+
+    /**
+     * Gets movie rating according to max allowed stars
+     * @param c the Context to get max stars from
+     * @param voteAvg average vote
+     * @return normalized rating
+     */
+    public static float getRating(Context c, float voteAvg) {
+        int maxVote = 10;
+        int maxStars = c.getResources().getInteger(R.integer.movie_rating_stars);
+        return voteAvg * maxStars / maxVote;
+    }
 }
