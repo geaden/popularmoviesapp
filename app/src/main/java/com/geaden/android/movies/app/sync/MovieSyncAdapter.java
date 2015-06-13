@@ -165,7 +165,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     /**
-     * Helper method to add list of movies
+     * Helper method to store list of movies in database
      * @param movieList the list of movies
      */
     private void addMovies(List<Movie> movieList) {

@@ -1,8 +1,12 @@
 package com.geaden.android.movies.app;
 
+import android.app.SearchManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -10,11 +14,15 @@ import com.geaden.android.movies.app.sync.MovieSyncAdapter;
 
 
 public class MainActivity extends AppCompatActivity {
+    private Toolbar mToolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
+        getSupportActionBar().setDisplayShowTitleEnabled(true);
         // make sure we've gotten an account created and we're syncing
         MovieSyncAdapter.initializeSyncAdapter(this);
     }

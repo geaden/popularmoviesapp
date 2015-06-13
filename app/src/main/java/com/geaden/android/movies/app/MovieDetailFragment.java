@@ -1,13 +1,19 @@
 package com.geaden.android.movies.app;
 
 import android.database.Cursor;
+import android.graphics.Color;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -59,6 +65,13 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         mMovieOverview = (TextView) rootView.findViewById(R.id.movie_detail_overview);
         mMoviePoster = (ImageView) rootView.findViewById(R.id.movie_detail_poster);
         mMovieRating = (RatingBar) rootView.findViewById(R.id.movie_detail_rating);
+        LayerDrawable layerDrawable = (LayerDrawable) mMovieRating.getProgressDrawable();
+        DrawableCompat.setTint(DrawableCompat.wrap(layerDrawable.getDrawable(0)),
+                getResources().getColor(R.color.movie_empty_star));
+        DrawableCompat.setTint(DrawableCompat.wrap(layerDrawable.getDrawable(1)),
+                getResources().getColor(R.color.movie_partial_star));
+        DrawableCompat.setTint(DrawableCompat.wrap(layerDrawable.getDrawable(2)),
+                getResources().getColor(R.color.movie_full_star));
         return rootView;
     }
 
@@ -81,15 +94,28 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        if (null != data && data.moveToFirst()) {
-            String title = data.getString(MovieGridFragment.TITLE);
-            float voteAvg = data.getFloat(MovieGridFragment.VOTE_AVG);
-            String overview = data.getString(MovieGridFragment.OVERVIEW);
-            String posterPath = data.getString(MovieGridFragment.POSTER_PATH);
-            mMovieTitle.setText(title);
-            mMovieOverview.setText(overview);
-            Picasso.with(getActivity()).load(posterPath).into(mMoviePoster);
-            mMovieRating.setRating(Utility.getRating(getActivity(), voteAvg));
+        if (!data.moveToFirst()) return;
+
+        String title = data.getString(MovieGridFragment.TITLE);
+        float voteAvg = data.getFloat(MovieGridFragment.VOTE_AVG);
+        String overview = data.getString(MovieGridFragment.OVERVIEW);
+        String posterPath = data.getString(MovieGridFragment.POSTER_PATH);
+        mMovieTitle.setText(title);
+        mMovieOverview.setText(overview);
+        Picasso.with(getActivity()).load(posterPath).into(mMoviePoster);
+        mMovieRating.setRating(Utility.getRating(getActivity(), voteAvg));
+
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        Toolbar toolbarView = (Toolbar) getView().findViewById(R.id.toolbar);
+
+        // We need to start the enter transition after the data has loaded
+        if (activity instanceof MovieDetailActivity) {
+            activity.supportStartPostponedEnterTransition();
+            if ( null != toolbarView ) {
+                activity.setSupportActionBar(toolbarView);
+                activity.getSupportActionBar().setDisplayShowTitleEnabled(false);
+                activity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            }
         }
     }
 

@@ -24,5 +24,7 @@
     <string name="empty_movie_list_no_network">Movies not available. No network.</string>
     <string name="empty_movie_list_syncing">Movies are syncing...</string>
     <string name="movie_detail_title">Movie detail</string>
+    <string name="search_hint">Type movie title</string>
+    <string name="search_title">Search</string>
 
 </resources>

@@ -2,6 +2,7 @@ package com.geaden.android.movies.app;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 
 /**
  * Movie detail activity.

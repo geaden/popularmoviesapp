@@ -1,9 +1,21 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="toolbarStyle">@style/Toolbar</item>
     </style>
+
+    <style name="Toolbar" parent="Widget.AppCompat.Toolbar">
+        <item name="android:background">?attr/colorPrimary</item>
+        <item name="popupTheme">@style/Theme.AppCompat.Light</item>
+    </style>
+
+    <!-- Settings Activity Theme. -->
+    <style name="SettingsTheme" parent="AppTheme"></style>
 
     <!-- Base Movie Text Style -->
     <style name="Movie.BaseText" parent="TextAppearance.AppCompat">
@@ -22,6 +34,7 @@
     <style name="Movie.Title" parent="Movie.BaseText">
         <item name="android:fontFamily">sans-serif-condensed</item>
         <item name="android:textSize">@dimen/movie_title_size</item>
+        <item name="android:textAppearance">?android:textAppearanceLarge</item>
     </style>
 
     <!-- Movie overview style in a list view -->

@@ -1,5 +1,7 @@
 package com.geaden.android.movies.app;
 
+import android.app.SearchManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -9,8 +11,12 @@ import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -34,6 +40,8 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
 
     private MoviesAdapter mMoviesAdapter;
     private String LOG_TAG = getClass().getSimpleName();
+
+    private String mMovieQuery;
 
     /** Movie column projection **/
     public static final String[] MOVIE_PROJECTION = {
@@ -59,7 +67,41 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     public final static int POSTER_PATH = 7;
     public final static int BACKDROP_PATH = 8;
 
-    public MovieGridFragment() {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Add this line in order for this fragment to handle menu events.
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.menu_movies, menu);
+        // Associate searchable configuration with the SearchView
+        SearchManager searchManager =
+                (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
+        MenuItem searchItem = menu.findItem(R.id.search);
+        final SearchView searchView = (SearchView) searchItem.getActionView();
+        searchView.setSearchableInfo(
+                searchManager.getSearchableInfo(getActivity().getComponentName()));
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+
+            @Override
+            public boolean onQueryTextChange(String query) {
+                Log.d(LOG_TAG, "Query text changed: " + query);
+                onMoveQueryChanged(query);
+                return true;
+
+            }
+
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                Log.d(LOG_TAG, "Query submitted: " + query);
+                onMoveQueryChanged(query);
+                return true;
+            }
+        });
     }
 
     @Override
@@ -84,6 +126,15 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             }
         });
         return rootView;
+    }
+
+    /**
+     * Performs query for list of movides
+     * @param query the query
+     */
+    private void onMoveQueryChanged(String query) {
+        mMovieQuery = query;
+        getActivity().getSupportLoaderManager().restartLoader(MOVIES_LOADER, null, this);
     }
 
     @Override
@@ -121,11 +172,17 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
         } else {
             orderCol = MovieContract.MovieEntry.COLUMN_POPULARITY;
         }
+        String selection = null;
+        String[] selectionArgs = null;
+        if (null != mMovieQuery && !mMovieQuery.isEmpty()) {
+            selection = MovieContract.MovieEntry.COLUMN_TITLE + " LIKE LOWER(?)";
+            selectionArgs = new String[]{mMovieQuery + "%"};
+        }
         return new CursorLoader(getActivity(),
                 MovieContract.MovieEntry.CONTENT_URI,
                 MOVIE_PROJECTION,
-                null,
-                null,
+                selection,
+                selectionArgs,
                 orderCol + " DESC");
     }
 
