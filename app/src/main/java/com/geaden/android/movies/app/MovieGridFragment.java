@@ -54,6 +54,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             MovieContract.MovieEntry.COLUMN_VOTE_COUNT,
             MovieContract.MovieEntry.COLUMN_POSTER_PATH,
             MovieContract.MovieEntry.COLUMN_BACKDROP_PATH,
+            MovieContract.MovieEntry.COLUMN_RELEASE_DATE
     };
 
     /** Corresponding column indices **/
@@ -66,6 +67,8 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     public final static int VOTE_COUNT = 6;
     public final static int POSTER_PATH = 7;
     public final static int BACKDROP_PATH = 8;
+    public final static int RELEASE_DATE = 9;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

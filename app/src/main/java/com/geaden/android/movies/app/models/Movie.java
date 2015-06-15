@@ -13,7 +13,7 @@ import java.util.Date;
  * @author Gennady Denisov
  */
 public class Movie {
-    private final String BASE_IMG_PATH = "http://image.tmdb.org/t/p/w185";
+    private final String BASE_IMG_PATH = "http://image.tmdb.org/t/p";
 
     private boolean adult;
     @SerializedName("backdrop_path")
@@ -43,7 +43,7 @@ public class Movie {
     }
 
     public String getBackdropPath() {
-        return BASE_IMG_PATH + backdropPath;
+        return BASE_IMG_PATH + "/w185" + backdropPath;
     }
 
     public long getId() {
@@ -58,8 +58,21 @@ public class Movie {
         return title;
     }
 
+    /**
+     * Gets poster path with default size 185
+     * @return poster path with default size
+     */
     public String getPosterPath() {
-        return BASE_IMG_PATH + posterPath;
+        return getPosterPath("w185");
+    }
+
+    /**
+     * Gets poster path with provided width
+     * @param width the width of poster
+     * @return poster url
+     */
+    public String getPosterPath(String width) {
+        return BASE_IMG_PATH + "/" + width + posterPath;
     }
 
     public Date getReleaseDate() {

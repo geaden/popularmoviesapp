@@ -23,6 +23,8 @@ import android.widget.TextView;
 import com.geaden.android.movies.app.data.MovieContract;
 import com.squareup.picasso.Picasso;
 
+import org.w3c.dom.Text;
+
 /**
  * Movie detail fragment.
  *
@@ -34,11 +36,12 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     private ImageView mMoviePoster;
     private TextView mMovieTitle;
     private TextView mMovieOverview;
+    private TextView mMovieRatingNumber;
     private RatingBar mMovieRating;
 
     private final int MOVIE_DETAIL_LOADER = 0;
-
     private long mMovieId;
+    private TextView mMovieReleaseDate;
 
     public MovieDetailFragment() {
 
@@ -65,6 +68,8 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         mMovieOverview = (TextView) rootView.findViewById(R.id.movie_detail_overview);
         mMoviePoster = (ImageView) rootView.findViewById(R.id.movie_detail_poster);
         mMovieRating = (RatingBar) rootView.findViewById(R.id.movie_detail_rating);
+        mMovieRatingNumber = (TextView) rootView.findViewById(R.id.movie_detail_rating_number);
+        mMovieReleaseDate = (TextView) rootView.findViewById(R.id.movie_detail_release_date);
         LayerDrawable layerDrawable = (LayerDrawable) mMovieRating.getProgressDrawable();
         DrawableCompat.setTint(DrawableCompat.wrap(layerDrawable.getDrawable(0)),
                 getResources().getColor(R.color.movie_empty_star));
@@ -100,10 +105,13 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         float voteAvg = data.getFloat(MovieGridFragment.VOTE_AVG);
         String overview = data.getString(MovieGridFragment.OVERVIEW);
         String posterPath = data.getString(MovieGridFragment.POSTER_PATH);
+        String releaseDate = data.getString(MovieGridFragment.RELEASE_DATE);
         mMovieTitle.setText(title);
         mMovieOverview.setText(overview);
         Picasso.with(getActivity()).load(posterPath).into(mMoviePoster);
         mMovieRating.setRating(Utility.getRating(getActivity(), voteAvg));
+        mMovieRatingNumber.setText(getString(R.string.movie_rating_number, voteAvg));
+        mMovieReleaseDate.setText(releaseDate);
 
         AppCompatActivity activity = (AppCompatActivity) getActivity();
         Toolbar toolbarView = (Toolbar) getView().findViewById(R.id.toolbar);
