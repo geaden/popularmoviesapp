@@ -18,14 +18,25 @@
     <!-- SyncAdapter related -->
     <string name="sync_account_type" translatable="false">movies.geaden.com</string>
     <string name="content_authority" translatable="false">com.geaden.android.movies.app</string>
+
+    <!-- Empty view -->
     <string name="empty_movie_list_server_down">Movies not available. Server is down.</string>
     <string name="empty_movie_list_list_server_error">Movies not available. Server error.</string>
     <string name="empty_movie_list_connection_unknown">Movies not available. Unknown error.</string>
     <string name="empty_movie_list_no_network">Movies not available. No network.</string>
     <string name="empty_movie_list_syncing">Movies are syncing...</string>
+
     <string name="movie_detail_title">Movie detail</string>
     <string name="search_hint">Type movie title</string>
     <string name="search_title">Search</string>
-    <string name="movie_rating_number"><xliff:g id="movie_voted_avg">%1$s/10</xliff:g></string>
 
+    <!-- Rating text string -->
+    <string name="movie_rating_number"><xliff:g id="movie_voted_avg">%1$s/10.0</xliff:g></string>
+
+    <!-- Share -->
+    <string name="action_share">Share</string>
+    <string name="movie_share_string">Check out
+        <xliff:g id="movie_url">%1$s</xliff:g>
+         <xliff:g id="movie_share_hashtag">%2$s</xliff:g>
+    </string>
 </resources>

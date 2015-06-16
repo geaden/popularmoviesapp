@@ -30,16 +30,36 @@
         <item name="android:textSize">@dimen/movie_title_size</item>
     </style>
 
-    <!-- Movie title style in a list view -->
+    <!-- Movie title style -->
     <style name="Movie.Title" parent="Movie.BaseText">
         <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textColor">@android:color/white</item>
         <item name="android:textSize">@dimen/movie_title_size</item>
         <item name="android:textAppearance">?android:textAppearanceLarge</item>
     </style>
 
-    <!-- Movie overview style in a list view -->
+    <!-- Movie rating text style in detail view -->
+    <style name="Movie.Rating" parent="Movie.BaseText">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:background">@color/movie_rating_number</item>
+        <item name="android:padding">@dimen/movie_rating_number_padding</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">@dimen/movie_rating_number_size</item>
+        <item name="android:elevation">@dimen/movie_detail_elevation</item>
+    </style>
+
+    <!-- Movie release date in detail view -->
+    <style name="Movie.ReleaseDate" parent="Movie.BaseText">
+        <item name="android:textSize">@dimen/movie_detail_release_size</item>
+        <item name="android:paddingTop">@dimen/movie_overview_padding_top</item>
+    </style>
+
+    <!-- Movie overview in detail view -->
     <style name="Movie.Overview" parent="Movie.BaseText">
         <item name="android:textSize">@dimen/movie_overview_size</item>
         <item name="android:paddingTop">@dimen/movie_overview_padding_top</item>
     </style>
+
+    <dimen name="movie_detail_release_size">22sp</dimen>
 </resources>

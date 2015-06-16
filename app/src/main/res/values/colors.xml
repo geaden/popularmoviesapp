@@ -11,5 +11,5 @@
     <color name="movie_partial_star">#FFF176</color>
     <color name="movie_empty_star">#FFFDE7</color>
     <color name="primary_detail">#00796B</color>
-    <color name="movie_rating_number">#827717</color>
+    <color name="movie_rating_number">#EF6C00</color>
 </resources>

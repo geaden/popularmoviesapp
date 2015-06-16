@@ -79,4 +79,16 @@ public class Utility {
         int maxStars = c.getResources().getInteger(R.integer.movie_rating_stars);
         return voteAvg * maxStars / maxVote;
     }
+
+    /**
+     * Gets movie release date from provided date string
+     * @param dateStr the date string
+     * @return year as string
+     */
+    public static String getReleaseYear(String dateStr) {
+        if (dateStr != null) {
+            return dateStr.split("-")[0];
+        }
+        return null;
+    }
 }

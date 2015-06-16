@@ -1,7 +1,7 @@
 package com.geaden.android.movies.app;
 
+import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -10,10 +10,15 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -23,8 +28,6 @@ import android.widget.TextView;
 import com.geaden.android.movies.app.data.MovieContract;
 import com.squareup.picasso.Picasso;
 
-import org.w3c.dom.Text;
-
 /**
  * Movie detail fragment.
  *
@@ -32,6 +35,8 @@ import org.w3c.dom.Text;
  */
 public class MovieDetailFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
     public static String MOVIE_DETAIL_ID = "movie_detail_id";
+
+    public final String MOVIE_SHARE_HASHTAG = "#TMDB";
 
     private ImageView mMoviePoster;
     private TextView mMovieTitle;
@@ -42,9 +47,11 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     private final int MOVIE_DETAIL_LOADER = 0;
     private long mMovieId;
     private TextView mMovieReleaseDate;
+    private ShareActionProvider mShareActionProvider;
+    private String LOG_TAG = getClass().getSimpleName();
 
     public MovieDetailFragment() {
-
+        setHasOptionsMenu(true);
     }
 
     public static Fragment getInstance(long movieId) {
@@ -55,6 +62,45 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         return fragment;
     }
 
+    private Intent createShareMovieIntent(long extMovieId) {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        shareIntent.setType("text/plain");
+        Log.d(LOG_TAG, "Share " +  getString(
+                R.string.movie_share_string, getMovieUrl(extMovieId), MOVIE_SHARE_HASHTAG));
+        shareIntent.putExtra(Intent.EXTRA_TEXT, getString(
+                R.string.movie_share_string, getMovieUrl(extMovieId), MOVIE_SHARE_HASHTAG));
+        return shareIntent;
+    }
+
+    /**
+     * Returns movie url from provided movie id
+     * @param extMovieId the external movie id
+     * @return the movie url
+     */
+    private String getMovieUrl(long extMovieId) {
+        return "https://www.themoviedb.org/movie/" + extMovieId;
+    }
+
+
+    /**
+     * Attaches intent to share action provider
+     * @param shareIntent share intent to attach
+     */
+    private void setShareIntent(Intent shareIntent) {
+        if (mShareActionProvider != null) {
+            mShareActionProvider.setShareIntent(shareIntent);
+        } else {
+            Log.d(LOG_TAG, "Share Action provider is null?");
+        }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        // Inflate the menu; this adds items to the action bar if it is present.
+        inflater.inflate(R.menu.menu_movie_detail, menu);
+    }
 
     @Nullable
     @Override
@@ -101,6 +147,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         if (!data.moveToFirst()) return;
 
+        long extMovieId = data.getLong(MovieGridFragment.MOVIE_ID);
         String title = data.getString(MovieGridFragment.TITLE);
         float voteAvg = data.getFloat(MovieGridFragment.VOTE_AVG);
         String overview = data.getString(MovieGridFragment.OVERVIEW);
@@ -109,9 +156,15 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         mMovieTitle.setText(title);
         mMovieOverview.setText(overview);
         Picasso.with(getActivity()).load(posterPath).into(mMoviePoster);
+        mMoviePoster.setContentDescription(title);
         mMovieRating.setRating(Utility.getRating(getActivity(), voteAvg));
         mMovieRatingNumber.setText(getString(R.string.movie_rating_number, voteAvg));
-        mMovieReleaseDate.setText(releaseDate);
+        mMovieReleaseDate.setText(Utility.getReleaseYear(releaseDate));
+
+        // If onCreateOptionsMenu has already happened, we need to update the share intent now.
+        if (mShareActionProvider != null) {
+            mShareActionProvider.setShareIntent(createShareMovieIntent(extMovieId));
+        }
 
         AppCompatActivity activity = (AppCompatActivity) getActivity();
         Toolbar toolbarView = (Toolbar) getView().findViewById(R.id.toolbar);
@@ -123,8 +176,29 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                 activity.setSupportActionBar(toolbarView);
                 activity.getSupportActionBar().setDisplayShowTitleEnabled(false);
                 activity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                Menu menu = toolbarView.getMenu();
+                if ( null != menu ) menu.clear();
+                // Locate MenuItem with ShareActionProvider
+                toolbarView.inflateMenu(R.menu.menu_movie_detail);
+                finishCreatingMenu(toolbarView.getMenu(), extMovieId);
             }
         }
+//        else {
+//            if ( null != toolbarView ) {
+//                Menu menu = toolbarView.getMenu();
+//                if ( null != menu ) menu.clear();
+//                // Locate MenuItem with ShareActionProvider
+//                toolbarView.inflateMenu(R.menu.menu_movie_detail);
+//                finishCreatingMenu(toolbarView.getMenu(), extMovieId);
+//            }
+//        }
+    }
+
+    private void finishCreatingMenu(Menu menu, long extMovieId) {
+        // Fetch and store ShareActionProvider
+        MenuItem shareItem = menu.findItem(R.id.action_share);
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(shareItem);
+        setShareIntent(createShareMovieIntent(extMovieId));
     }
 
     @Override
