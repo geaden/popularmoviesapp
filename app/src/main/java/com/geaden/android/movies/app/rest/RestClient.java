@@ -31,6 +31,7 @@ public class RestClient {
         RestAdapter restAdapter = new RestAdapter.Builder()
                 .setEndpoint("http://api.themoviedb.org/3")
                 .setConverter(new GsonConverter(gson))
+                .setLogLevel(RestAdapter.LogLevel.FULL)
                 .setErrorHandler(new TmdbErrorHandler())
                 .build();
         sService = restAdapter.create(TmdbService.class);
@@ -38,7 +39,7 @@ public class RestClient {
 
     /**
      * Singleton for RestClient
-     * @return the rest client
+     * @return the rest client instance
      */
     public static RestClient getsInstance() {
         if (sInstanse == null) {
@@ -51,14 +52,8 @@ public class RestClient {
      * Gets list of movies by calling TMDB Api
      * @return list of Movie
      */
-    public List<Movie> queryMovies() {
-        try {
-            MovieResponse resp = sService.queryMovies("popularity.desc", TMDB_API_KEY);
-            return resp.getMovies();
-        } catch (UnauthorizedException e) {
-            Log.e(LOG_TAG, "Authorization needed", e);
-        }
-        return null;
+    public List<Movie> queryMovies(String sortOrder) throws Throwable {
+        MovieResponse resp = sService.queryMovies(sortOrder, TMDB_API_KEY);
+        return resp.getMovies();
     }
-
 }

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MovieDetailFragment">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/actionBarSize"
+        android:background="@color/primary_detail"
+        android:elevation="@dimen/movie_detail_elevation"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar" />
+        <!-- Detail card -->
+        <LinearLayout
+            android:background="@color/primary_detail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/movie_detail_card_padding"
+            android:elevation="@dimen/movie_detail_elevation">
+            <!-- Movie title -->
+            <TextView
+                android:id="@+id/movie_detail_title"
+                android:layout_width="match_parent"
+                tools:text="Chappi"
+                android:gravity="center_vertical"
+                android:minHeight="?android:attr/listPreferredItemHeight"
+                android:layout_height="wrap_content"
+                style="@style/Movie.Title"/>
+            <!-- Movie rating bar -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/movie_empty_padding"
+                android:orientation="horizontal">
+                <RatingBar
+                    android:id="@+id/movie_detail_rating"
+                    android:numStars="@integer/movie_rating_stars"
+                    android:stepSize="@string/movie_rating_step"
+                    android:layout_width="wrap_content"
+                    android:isIndicator="true"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginRight="@dimen/movie_detail_rating_bar_margin"
+                    android:layout_marginEnd="@dimen/movie_detail_rating_bar_margin"
+                    style="?android:attr/ratingBarStyleSmall"
+                    android:layout_height="wrap_content" />
+                <!-- Movie rating text -->
+                <TextView
+                    android:id="@+id/movie_detail_rating_number"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Movie.Rating"
+                    tools:text="8.1/10"/>
+            </LinearLayout>
+        </LinearLayout>
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/movie_empty_padding">
+                <!-- Movie poster -->
+                <ImageView
+                    android:id="@+id/movie_detail_poster"
+                    android:layout_width="@dimen/movie_poster_size"
+                    android:layout_height="wrap_content"
+                    android:adjustViewBounds="true"
+                    tools:src="@drawable/poster"/>
+
+                <!-- Movie release date -->
+                <TextView
+                    android:id="@+id/movie_detail_release_date"
+                    style="@style/Movie.ReleaseDate"
+                    android:layout_toRightOf="@id/movie_detail_poster"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    tools:text="2015"/>
+
+                <!-- Movie duration -->
+                <TextView
+                    android:id="@+id/movie_detail_duration"
+                    android:layout_toRightOf="@id/movie_detail_poster"
+                    android:layout_below="@id/movie_detail_release_date"
+                    style="@style/Movie.Overview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    tools:text="120 min"/>
+
+                <!-- Movie overview -->
+                <TextView
+                    android:id="@+id/movie_detail_overview"
+                    android:layout_below="@id/movie_detail_poster"
+                    style="@style/Movie.Overview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    tools:text="lorem ipsum"/>
+
+            </RelativeLayout>
+        </ScrollView>
+</LinearLayout>
