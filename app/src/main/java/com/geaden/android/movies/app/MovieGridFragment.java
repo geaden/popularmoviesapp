@@ -54,7 +54,8 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             MovieContract.MovieEntry.COLUMN_VOTE_COUNT,
             MovieContract.MovieEntry.COLUMN_POSTER_PATH,
             MovieContract.MovieEntry.COLUMN_BACKDROP_PATH,
-            MovieContract.MovieEntry.COLUMN_RELEASE_DATE
+            MovieContract.MovieEntry.COLUMN_RELEASE_DATE,
+            MovieContract.MovieEntry.COLUMN_IS_FAVOURITE
     };
 
     /** Corresponding column indices **/
@@ -68,6 +69,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     public final static int POSTER_PATH = 7;
     public final static int BACKDROP_PATH = 8;
     public final static int RELEASE_DATE = 9;
+    public final static int IS_FAVOURITE = 10;
 
 
     @Override
@@ -162,6 +164,8 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        String selection = null;
+        String[] selectionArgs = null;
         // Get the column name to order the result
         String orderCol;
         // Get the sor order
@@ -172,14 +176,29 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             orderCol = MovieContract.MovieEntry.COLUMN_POPULARITY;
         } else if (sortOrder.equals(getString(R.string.pref_sort_rating))) {
             orderCol = MovieContract.MovieEntry.COLUMN_VOTE_AVG;
+        } else if (sortOrder.equals(getString(R.string.pref_sort_favourite))) {
+            selection = MovieContract.MovieEntry.COLUMN_IS_FAVOURITE + " = ?";
+            selectionArgs = new String[] {"1"};
+            orderCol = MovieContract.MovieEntry.COLUMN_POPULARITY;
         } else {
             orderCol = MovieContract.MovieEntry.COLUMN_POPULARITY;
         }
-        String selection = null;
-        String[] selectionArgs = null;
         if (null != mMovieQuery && !mMovieQuery.isEmpty()) {
-            selection = MovieContract.MovieEntry.COLUMN_TITLE + " LIKE LOWER(?)";
-            selectionArgs = new String[]{mMovieQuery + "%"};
+            if (selection != null) {
+                selection += " AND " + MovieContract.MovieEntry.COLUMN_TITLE + " LIKE LOWER(?)";
+            } else {
+                selection = MovieContract.MovieEntry.COLUMN_TITLE + " LIKE LOWER(?)";
+            }
+            if (selectionArgs != null) {
+                String[] newSelectionArgs = new String[selectionArgs.length + 1];
+                for (int i = 0; i < selectionArgs.length; i++) {
+                    newSelectionArgs[i] = selectionArgs[i];
+                }
+                newSelectionArgs[newSelectionArgs.length - 1] = mMovieQuery + "%";
+                selectionArgs = newSelectionArgs;
+            } else {
+                selectionArgs = new String[]{mMovieQuery + "%"};
+            }
         }
         return new CursorLoader(getActivity(),
                 MovieContract.MovieEntry.CONTENT_URI,

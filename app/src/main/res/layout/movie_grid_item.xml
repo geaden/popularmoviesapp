@@ -11,4 +11,16 @@
         android:scaleType="fitCenter"
         android:layout_height="fill_parent"
         android:adjustViewBounds="true"/>
+    <!-- Movie favourite indicator -->
+    <ImageView
+        android:padding="@dimen/movie_favourite_padding"
+        android:id="@+id/movie_favourite"
+        android:src="@drawable/ic_action_favorite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@id/movie_poster"
+        android:visibility="gone"
+        tools:visibility="visible"
+        android:layout_alignBottom="@id/movie_poster"
+        android:layout_alignEnd="@id/movie_poster"/>
 </RelativeLayout>

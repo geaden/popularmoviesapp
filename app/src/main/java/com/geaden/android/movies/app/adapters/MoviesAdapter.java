@@ -36,15 +36,22 @@ public class MoviesAdapter extends CursorAdapter {
         ViewHolder viewHolder = (ViewHolder) view.getTag();
         String posterPath = cursor.getString(MovieGridFragment.POSTER_PATH);
         String title = cursor.getString(MovieGridFragment.TITLE);
+        boolean isFavourite = cursor.getInt(MovieGridFragment.IS_FAVOURITE) == 1;
         Picasso.with(context).load(posterPath).into(viewHolder.iv);
         viewHolder.iv.setContentDescription(title);
+        // Show that movie is favourite
+        if (isFavourite) {
+            viewHolder.favouriteImageView.setVisibility(View.VISIBLE);
+        }
     }
 
     private class ViewHolder {
         ImageView iv;
+        ImageView favouriteImageView;
 
         ViewHolder(View v) {
             iv = (ImageView) v.findViewById(R.id.movie_poster);
+            favouriteImageView = (ImageView) v.findViewById(R.id.movie_favourite);
         }
     }
 }

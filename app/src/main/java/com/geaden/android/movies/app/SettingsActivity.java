@@ -81,7 +81,10 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (key.equals(getString(R.string.pref_sort_key))) {
-            MovieSyncAdapter.syncImmediately(this);
+            if (!sharedPreferences.getString(key, getString(R.string.pref_default_sort_order_value))
+                    .equals(getString(R.string.pref_sort_favourite))) {
+                MovieSyncAdapter.syncImmediately(this);
+            }
         }
     }
 }

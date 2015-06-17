@@ -1,5 +1,6 @@
 package com.geaden.android.movies.app;
 
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.LayerDrawable;
@@ -24,6 +25,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.geaden.android.movies.app.data.MovieContract;
 import com.squareup.picasso.Picasso;
@@ -43,6 +45,9 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     private TextView mMovieOverview;
     private TextView mMovieRatingNumber;
     private RatingBar mMovieRating;
+
+    // Indicates if movie is favourite
+    private boolean mFavourite = false;
 
     private final int MOVIE_DETAIL_LOADER = 0;
     private long mMovieId;
@@ -66,8 +71,6 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
         shareIntent.setType("text/plain");
-        Log.d(LOG_TAG, "Share " +  getString(
-                R.string.movie_share_string, getMovieUrl(extMovieId), MOVIE_SHARE_HASHTAG));
         shareIntent.putExtra(Intent.EXTRA_TEXT, getString(
                 R.string.movie_share_string, getMovieUrl(extMovieId), MOVIE_SHARE_HASHTAG));
         return shareIntent;
@@ -100,6 +103,12 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         super.onCreateOptionsMenu(menu, inflater);
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.menu_movie_detail, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Nullable
@@ -144,7 +153,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     }
 
     @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+    public void onLoadFinished(Loader<Cursor> loader, final Cursor data) {
         if (!data.moveToFirst()) return;
 
         long extMovieId = data.getLong(MovieGridFragment.MOVIE_ID);
@@ -180,7 +189,45 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                 if ( null != menu ) menu.clear();
                 // Locate MenuItem with ShareActionProvider
                 toolbarView.inflateMenu(R.menu.menu_movie_detail);
-                finishCreatingMenu(toolbarView.getMenu(), extMovieId);
+                // Show movie is favourite
+                MenuItem isFavouriteItem = menu.findItem(R.id.action_favourite);
+                mFavourite = data.getInt(MovieGridFragment.IS_FAVOURITE) == 1;
+                if (mFavourite) {
+                    isFavouriteItem.setIcon(R.drawable.ic_action_favorite_outline);
+                    isFavouriteItem.setTitle(R.string.movie_unfavourite);
+                    Log.d(LOG_TAG, "Movie is favourite");
+                }
+                toolbarView.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        if (item.getItemId() == R.id.action_favourite) {
+                            Log.d(LOG_TAG, "Clicked item " + item);
+                            String action = "Favourite";
+                            if (!mFavourite) {
+                                // Make it favourite
+                                mFavourite = true;
+                                item.setIcon(R.drawable.ic_action_favorite_outline);
+                                item.setTitle(R.string.movie_unfavourite);
+                            } else {
+                                mFavourite = false;
+                                item.setIcon(R.drawable.ic_action_favorite);
+                                item.setTitle(R.string.movie_favourite);
+                                action = "Unfavourite";
+                            }
+                            Toast.makeText(getActivity(), action, Toast.LENGTH_SHORT).show();
+                            ContentValues cv = new ContentValues();
+                            cv.put(MovieContract.MovieEntry.COLUMN_IS_FAVOURITE, mFavourite ? 1 : 0);
+                            getActivity().getContentResolver().update(
+                                    MovieContract.MovieEntry.CONTENT_URI,
+                                    cv,
+                                    MovieContract.MovieEntry._ID + " = ?",
+                                    new String[]{Long.toString(data.getLong(MovieGridFragment._ID))});
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+                finishCreatingMenu(menu, data);
             }
         }
 //        else {
@@ -194,10 +241,16 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 //        }
     }
 
-    private void finishCreatingMenu(Menu menu, long extMovieId) {
+    /**
+     * Finishes constructing toolbar menu, by adding share intent and modifying favourite icon
+     * @param menu the toolbar menu
+     * @param cursor the movie cursor
+     */
+    private void finishCreatingMenu(Menu menu, final Cursor cursor) {
         // Fetch and store ShareActionProvider
         MenuItem shareItem = menu.findItem(R.id.action_share);
         mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(shareItem);
+        long extMovieId = cursor.getLong(MovieGridFragment.MOVIE_ID);
         setShareIntent(createShareMovieIntent(extMovieId));
     }
 

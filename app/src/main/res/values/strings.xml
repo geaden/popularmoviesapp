@@ -10,8 +10,10 @@
     <string name="pref_conn_status_key" translatable="false">connection_status</string>
     <string name="pref_sort_popularity" translatable="false">popularity.desc</string>
     <string name="pref_sort_rating" translatable="false">vote_average.desc</string>
+    <string name="pref_sort_favourite" translatable="false">favourites</string>
     <string name="pref_sort_popularity_title">Most popular</string>
     <string name="pref_sort_rating_title">Highest rated</string>
+    <string name="pref_sort_favourite_title">Favourites</string>
     <!-- Default sort order -->
     <string name="pref_default_sort_order_value">@string/pref_sort_popularity</string>
 
@@ -39,4 +41,7 @@
         <xliff:g id="movie_url">%1$s</xliff:g>
          <xliff:g id="movie_share_hashtag">%2$s</xliff:g>
     </string>
+    <string name="action_favourite">Favourite</string>
+    <string name="movie_unfavourite">Unfavourite</string>
+    <string name="movie_favourite">Favourite</string>
 </resources>

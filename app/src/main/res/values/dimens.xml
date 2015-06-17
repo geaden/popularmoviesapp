@@ -14,4 +14,5 @@
     <dimen name="movie_detail_rating_bar_margin">16dp</dimen>
     <dimen name="movie_rating_number_size">16dp</dimen>
     <dimen name="movie_detail_card_padding">8dp</dimen>
+    <dimen name="movie_favourite_padding">16dp</dimen>
 </resources>
