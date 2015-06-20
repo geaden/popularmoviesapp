@@ -14,7 +14,12 @@
         android:minHeight="?attr/actionBarSize"
         android:background="@color/primary_detail"
         android:elevation="@dimen/movie_detail_elevation"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar" />
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+        <include layout="@layout/favourite_toggle_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end" />
+    </android.support.v7.widget.Toolbar>
         <!-- Detail card -->
         <LinearLayout
             android:background="@color/primary_detail"

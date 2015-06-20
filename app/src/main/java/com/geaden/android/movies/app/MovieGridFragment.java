@@ -45,8 +45,10 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
 
     /** Movie column projection **/
     public static final String[] MOVIE_PROJECTION = {
-            MovieContract.MovieEntry._ID,
-            MovieContract.MovieEntry.COLUMN_MOVIE_ID,
+            MovieContract.MovieEntry.TABLE_NAME + "." +
+                    MovieContract.MovieEntry._ID,
+            MovieContract.MovieEntry.TABLE_NAME + "." +
+                    MovieContract.MovieEntry.COLUMN_MOVIE_ID,
             MovieContract.MovieEntry.COLUMN_TITLE,
             MovieContract.MovieEntry.COLUMN_OVERVIEW,
             MovieContract.MovieEntry.COLUMN_POPULARITY,
@@ -55,7 +57,8 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             MovieContract.MovieEntry.COLUMN_POSTER_PATH,
             MovieContract.MovieEntry.COLUMN_BACKDROP_PATH,
             MovieContract.MovieEntry.COLUMN_RELEASE_DATE,
-            MovieContract.MovieEntry.COLUMN_IS_FAVOURITE
+            MovieContract.FavoriteEntry.TABLE_NAME + "." +
+                    MovieContract.FavoriteEntry.COLUMN_FAVORED_AT
     };
 
     /** Corresponding column indices **/
@@ -69,7 +72,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     public final static int POSTER_PATH = 7;
     public final static int BACKDROP_PATH = 8;
     public final static int RELEASE_DATE = 9;
-    public final static int IS_FAVOURITE = 10;
+    public final static int FAVORED_AT = 10;
 
 
     @Override
@@ -95,14 +98,12 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             @Override
             public boolean onQueryTextChange(String query) {
                 Log.d(LOG_TAG, "Query text changed: " + query);
-                onMoveQueryChanged(query);
                 return true;
 
             }
 
             @Override
             public boolean onQueryTextSubmit(String query) {
-                Log.d(LOG_TAG, "Query submitted: " + query);
                 onMoveQueryChanged(query);
                 return true;
             }
@@ -177,12 +178,14 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
         } else if (sortOrder.equals(getString(R.string.pref_sort_rating))) {
             orderCol = MovieContract.MovieEntry.COLUMN_VOTE_AVG;
         } else if (sortOrder.equals(getString(R.string.pref_sort_favourite))) {
-            selection = MovieContract.MovieEntry.COLUMN_IS_FAVOURITE + " = ?";
-            selectionArgs = new String[] {"1"};
+            selection = MovieContract.FavoriteEntry.TABLE_NAME + "." +
+                    MovieContract.FavoriteEntry.COLUMN_FAVORED_AT + " IS NOT NULL";
+            selectionArgs = null;
             orderCol = MovieContract.MovieEntry.COLUMN_POPULARITY;
         } else {
             orderCol = MovieContract.MovieEntry.COLUMN_POPULARITY;
         }
+        // Keep movie query if there is already selections
         if (null != mMovieQuery && !mMovieQuery.isEmpty()) {
             if (selection != null) {
                 selection += " AND " + MovieContract.MovieEntry.COLUMN_TITLE + " LIKE LOWER(?)";
@@ -197,7 +200,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
                 newSelectionArgs[newSelectionArgs.length - 1] = mMovieQuery + "%";
                 selectionArgs = newSelectionArgs;
             } else {
-                selectionArgs = new String[]{mMovieQuery + "%"};
+                selectionArgs = new String[] { mMovieQuery + "%" };
             }
         }
         return new CursorLoader(getActivity(),
@@ -239,7 +242,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
                     case MovieSyncAdapter.CONNECTION_SERVER_INVALID:
                         message = R.string.empty_movie_list_list_server_error;
                         break;
-                    case MovieSyncAdapter.CONNECTION_UNKOWN:
+                    case MovieSyncAdapter.CONNECTION_UNKNOWN:
                         message = R.string.empty_movie_list_connection_unknown;
                         break;
                     case MovieSyncAdapter.CONNECTION_OK:
@@ -247,6 +250,8 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
                     default:
                         if (!Utility.isNetworkAvailable(getActivity())) {
                             message = R.string.empty_movie_list_no_network;
+                        } else if (null != mMovieQuery && !mMovieQuery.isEmpty()) {
+                            message = R.string.empty_movie_list_not_found;
                         }
                 }
                 tv.setText(message);

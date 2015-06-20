@@ -1,7 +1,6 @@
 <resources xmlns:xliff="http://schemas.android.com/apk/res-auto">
     <string name="app_name">Popular Movies App</string>
     <string name="action_settings">Settings</string>
-    <string name="empty_movie_list">Movies not available</string>
     <string name="movie_rating_step" translatable="false">0.1</string>
 
     <!-- Preferences specific -->
@@ -22,10 +21,12 @@
     <string name="content_authority" translatable="false">com.geaden.android.movies.app</string>
 
     <!-- Empty view -->
+    <string name="empty_movie_list">Movies not available</string>
     <string name="empty_movie_list_server_down">Movies not available. Server is down.</string>
     <string name="empty_movie_list_list_server_error">Movies not available. Server error.</string>
     <string name="empty_movie_list_connection_unknown">Movies not available. Unknown error.</string>
     <string name="empty_movie_list_no_network">Movies not available. No network.</string>
+    <string name="empty_movie_list_not_found">No movies found.</string>
     <string name="empty_movie_list_syncing">Movies are syncing...</string>
 
     <string name="movie_detail_title">Movie detail</string>
@@ -41,7 +42,11 @@
         <xliff:g id="movie_url">%1$s</xliff:g>
          <xliff:g id="movie_share_hashtag">%2$s</xliff:g>
     </string>
-    <string name="action_favourite">Favourite</string>
-    <string name="movie_unfavourite">Unfavourite</string>
-    <string name="movie_favourite">Favourite</string>
+
+    <!-- Movie favorites -->
+    <string name="action_favourite">Favorite</string>
+    <string name="favorites_add">Add to favourites</string>
+    <string name="favorites_remove">Remove from favorites</string>
+    <string name="favorites_added">Added to favorites!</string>
+    <string name="favorites_removed">Removed from favorites!</string>
 </resources>

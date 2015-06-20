@@ -47,14 +47,27 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                 MovieEntry.COLUMN_POPULARITY + " REAL NOT NULL, " +
                 MovieEntry.COLUMN_VOTE_AVG + " REAL NOT NULL, " +
                 MovieEntry.COLUMN_VOTE_COUNT + " INTEGER NOT NULL, " +
-                MovieEntry.COLUMN_IS_FAVOURITE + " INTEGER DEFAULT 0, " +
-                MovieEntry.COLUMN_RELEASE_DATE + " TEXT);";
+                MovieEntry.COLUMN_RELEASE_DATE + " TEXT, " +
+                // Provide uniqueness of external movie id
+                " UNIQUE (" + MovieEntry.COLUMN_MOVIE_ID + "," +
+                MovieEntry._ID + ") ON CONFLICT REPLACE);";
+        final String SQL_CREATE_FAVORITES_TABLE = "CREATE TABLE " + FavoriteEntry.TABLE_NAME + " (" +
+                FavoriteEntry._ID + " INTEGER PRIMARY KEY, " +
+                FavoriteEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
+                FavoriteEntry.COLUMN_FAVORED_AT + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                " FOREIGN KEY (" + FavoriteEntry.COLUMN_MOVIE_ID + ") REFERENCES " +
+                MovieEntry.TABLE_NAME + "(" + MovieEntry.COLUMN_MOVIE_ID + "), " +
+                // Assure that just one movie with the same external id is favored
+                " UNIQUE (" + FavoriteEntry._ID + ", "
+                + FavoriteEntry.COLUMN_MOVIE_ID + ") ON CONFLICT REPLACE);";
         db.execSQL(SQL_CREATE_MOVIE_TABLE);
+        db.execSQL(SQL_CREATE_FAVORITES_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + MovieEntry.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + FavoriteEntry.TABLE_NAME);
         onCreate(db);
     }
 }

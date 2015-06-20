@@ -64,7 +64,7 @@ public class TestProvider extends AndroidTestCase {
 
         // Now see if we can successfully query if we include the row id
         cursor = mContext.getContentResolver().query(
-                MovieEntry.buidlMovieUri(movieId),
+                MovieEntry.buildMovieUri(movieId),
                 null, // leaving "columns" null just returns all the columns.
                 null, // cols for "where" clause
                 null, // values for "where" clause

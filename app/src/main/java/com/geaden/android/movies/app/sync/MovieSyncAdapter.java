@@ -10,21 +10,25 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SyncRequest;
 import android.content.SyncResult;
+import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.IntDef;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.geaden.android.movies.app.R;
 import com.geaden.android.movies.app.Utility;
 import com.geaden.android.movies.app.data.MovieContract.MovieEntry;
+import com.geaden.android.movies.app.data.MovieContract.FavoriteEntry;
 import com.geaden.android.movies.app.models.Movie;
 import com.geaden.android.movies.app.rest.RestClient;
 import com.geaden.android.movies.app.rest.UnauthorizedException;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
@@ -39,11 +43,10 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     public static final int CONNECTION_OK = 0;
     public static final int CONNECTION_SERVER_DOWN = 1;
     public static final int CONNECTION_SERVER_INVALID = 2;
-    public static final int CONNECTION_UNKOWN = 3;
+    public static final int CONNECTION_UNKNOWN = 3;
     public static final int CONNECTION_SYNC = 4;
 
-    // Interval at which to sync with the weather, in milliseconds.
-    // 1000 milliseconds (1 second) * 60 seconds (1 minute) * 180 = 3 hours
+    // Interval at which to sync with the TMDB, in seconds.
     public static final int SYNC_INTERVAL = 60 * 180;
     public static final int SYNC_FLEXTIME = SYNC_INTERVAL / 3;
 
@@ -51,7 +54,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     @IntDef({CONNECTION_OK,
             CONNECTION_SERVER_DOWN,
             CONNECTION_SERVER_INVALID,
-            CONNECTION_UNKOWN,
+            CONNECTION_UNKNOWN,
             CONNECTION_SYNC})
     public @interface ConnectionStatus {}
 
@@ -69,10 +72,10 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
             addMovies(movieList);
         } catch (UnauthorizedException e) {
             Log.e(LOG_TAG, "Error retrieving movies", e);
-            setConnectionStatus(getContext(), CONNECTION_UNKOWN);
+            setConnectionStatus(getContext(), CONNECTION_UNKNOWN);
         } catch (Throwable e) {
             Log.e(LOG_TAG, "Unknown server error", e);
-            setConnectionStatus(getContext(), CONNECTION_UNKOWN);
+            setConnectionStatus(getContext(), CONNECTION_UNKNOWN);
         }
     }
 
@@ -190,12 +193,31 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         // add to database
         if ( cVVector.size() > 0 ) {
             // delete old data so we don't build up an endless history
-            getContext().getContentResolver().delete(MovieEntry.CONTENT_URI, null, null);
+            Cursor favoredCursor = getContext().getContentResolver().query(
+                    FavoriteEntry.CONTENT_URI,
+                    new String[]{FavoriteEntry.COLUMN_MOVIE_ID},
+                    null,
+                    null,
+                    null);
+            List<String> favored = new ArrayList<String>(favoredCursor.getCount());
+            List<String> parameters = new ArrayList<String>(favoredCursor.getCount());
+            while (favoredCursor.moveToNext()) {
+                favored.add(favoredCursor.getString(favoredCursor.getColumnIndex(
+                        FavoriteEntry.COLUMN_MOVIE_ID)));
+                parameters.add("?");
+            }
+            // We're done. Now we have a list of favored movies.
+            favoredCursor.close();
+            Log.d(LOG_TAG, "Favored movies: " + TextUtils.join(", ", favored));
+            // Delete all movies except favored ones
+            getContext().getContentResolver().delete(MovieEntry.CONTENT_URI,
+                    MovieEntry.COLUMN_MOVIE_ID + " NOT IN (" + TextUtils.join(", ", parameters) +
+                            ")", favored.toArray(new String[favored.size()]));
             ContentValues[] cvArray = new ContentValues[cVVector.size()];
             cVVector.toArray(cvArray);
             getContext().getContentResolver().bulkInsert(MovieEntry.CONTENT_URI, cvArray);
         }
-        Log.d(LOG_TAG, "Sync Complete. " + cVVector.size() + " inserted");
+        Log.d(LOG_TAG, "Sync Complete. " + cVVector.size() + " inserted.");
         setConnectionStatus(getContext(), CONNECTION_OK);
     }
 

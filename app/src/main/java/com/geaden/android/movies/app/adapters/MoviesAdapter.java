@@ -36,12 +36,14 @@ public class MoviesAdapter extends CursorAdapter {
         ViewHolder viewHolder = (ViewHolder) view.getTag();
         String posterPath = cursor.getString(MovieGridFragment.POSTER_PATH);
         String title = cursor.getString(MovieGridFragment.TITLE);
-        boolean isFavourite = cursor.getInt(MovieGridFragment.IS_FAVOURITE) == 1;
+        boolean isFavourite = cursor.getLong(MovieGridFragment.FAVORED_AT) > 0;
         Picasso.with(context).load(posterPath).into(viewHolder.iv);
         viewHolder.iv.setContentDescription(title);
         // Show that movie is favourite
         if (isFavourite) {
             viewHolder.favouriteImageView.setVisibility(View.VISIBLE);
+        } else {
+            viewHolder.favouriteImageView.setVisibility(View.INVISIBLE);
         }
     }
 

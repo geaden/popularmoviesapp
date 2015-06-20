@@ -52,7 +52,7 @@ public class Utility {
     static public @MovieSyncAdapter.ConnectionStatus int getConnectionStatus(Context context) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         return sp.getInt(context.getString(R.string.pref_conn_status_key),
-                MovieSyncAdapter.CONNECTION_UNKOWN);
+                MovieSyncAdapter.CONNECTION_UNKNOWN);
     }
 
     /**

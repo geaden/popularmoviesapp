@@ -22,10 +22,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.geaden.android.movies.app.data.MovieContract;
 import com.squareup.picasso.Picasso;
@@ -145,7 +147,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         return new CursorLoader(
                 getActivity(),
-                MovieContract.MovieEntry.buidlMovieUri(mMovieId),
+                MovieContract.MovieEntry.buildMovieUri(mMovieId),
                 MovieGridFragment.MOVIE_PROJECTION,
                 null,
                 null,
@@ -156,7 +158,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     public void onLoadFinished(Loader<Cursor> loader, final Cursor data) {
         if (!data.moveToFirst()) return;
 
-        long extMovieId = data.getLong(MovieGridFragment.MOVIE_ID);
+        final long extMovieId = data.getLong(MovieGridFragment.MOVIE_ID);
         String title = data.getString(MovieGridFragment.TITLE);
         float voteAvg = data.getFloat(MovieGridFragment.VOTE_AVG);
         String overview = data.getString(MovieGridFragment.OVERVIEW);
@@ -189,42 +191,29 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                 if ( null != menu ) menu.clear();
                 // Locate MenuItem with ShareActionProvider
                 toolbarView.inflateMenu(R.menu.menu_movie_detail);
-                // Show movie is favourite
-                MenuItem isFavouriteItem = menu.findItem(R.id.action_favourite);
-                mFavourite = data.getInt(MovieGridFragment.IS_FAVOURITE) == 1;
-                if (mFavourite) {
-                    isFavouriteItem.setIcon(R.drawable.ic_action_favorite_outline);
-                    isFavouriteItem.setTitle(R.string.movie_unfavourite);
-                    Log.d(LOG_TAG, "Movie is favourite");
-                }
-                toolbarView.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+                mFavourite = data.getLong(MovieGridFragment.FAVORED_AT) > 0;
+                ToggleButton favouriteToggle = (ToggleButton) toolbarView.findViewById(R.id.favourite_toggle_btn);
+                favouriteToggle.setChecked(mFavourite);
+                favouriteToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
-                    public boolean onMenuItemClick(MenuItem item) {
-                        if (item.getItemId() == R.id.action_favourite) {
-                            Log.d(LOG_TAG, "Clicked item " + item);
-                            String action = "Favourite";
-                            if (!mFavourite) {
-                                // Make it favourite
-                                mFavourite = true;
-                                item.setIcon(R.drawable.ic_action_favorite_outline);
-                                item.setTitle(R.string.movie_unfavourite);
-                            } else {
-                                mFavourite = false;
-                                item.setIcon(R.drawable.ic_action_favorite);
-                                item.setTitle(R.string.movie_favourite);
-                                action = "Unfavourite";
-                            }
-                            Toast.makeText(getActivity(), action, Toast.LENGTH_SHORT).show();
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        mFavourite = isChecked;
+                        if (mFavourite) {
+                            // Add movie to favorites
                             ContentValues cv = new ContentValues();
-                            cv.put(MovieContract.MovieEntry.COLUMN_IS_FAVOURITE, mFavourite ? 1 : 0);
-                            getActivity().getContentResolver().update(
-                                    MovieContract.MovieEntry.CONTENT_URI,
-                                    cv,
-                                    MovieContract.MovieEntry._ID + " = ?",
-                                    new String[]{Long.toString(data.getLong(MovieGridFragment._ID))});
-                            return true;
+                            cv.put(MovieContract.FavoriteEntry.COLUMN_MOVIE_ID, extMovieId);
+                            getActivity().getContentResolver().insert(
+                                    MovieContract.FavoriteEntry.CONTENT_URI,
+                                    cv);
+                        } else {
+                            // Remove movie from favorites
+                            getActivity().getContentResolver().delete(MovieContract.FavoriteEntry.CONTENT_URI,
+                                    MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + " = ?",
+                                    new String[]{Long.toString(extMovieId)});
                         }
-                        return false;
+                        Toast.makeText(getActivity(), mFavourite ? getString(R.string.favorites_added) :
+                                        getString(R.string.favorites_removed),
+                                Toast.LENGTH_SHORT).show();
                     }
                 });
                 finishCreatingMenu(menu, data);
