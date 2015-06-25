@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.os.Build;
 
 
 /**
@@ -121,6 +122,8 @@ public class MovieContentProvider extends ContentProvider {
                 return MovieContract.MovieEntry.CONTENT_TYPE;
             case MOVIE_ID:
                 return MovieContract.MovieEntry.CONTENT_ITEM_TYPE;
+            case FAVORITES:
+                return MovieContract.FavoriteEntry.CONTENT_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -150,6 +153,8 @@ public class MovieContentProvider extends ContentProvider {
                     returnUri = MovieContract.FavoriteEntry.buildFavoriteUri(_id);
                 else
                     throw new android.database.SQLException("Failed to insert row into " + uri);
+                // Notify the movie was added to favorites
+                getContext().getContentResolver().notifyChange(MovieContract.MovieEntry.CONTENT_URI, null);
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -174,6 +179,10 @@ public class MovieContentProvider extends ContentProvider {
                         MovieContract.FavoriteEntry.TABLE_NAME,
                         whereClause,
                         whereArgs);
+                if (rowsDeleted != 0) {
+                    // Notify the movie is removed from favorites
+                    getContext().getContentResolver().notifyChange(MovieContract.MovieEntry.CONTENT_URI, null);
+                }
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -240,7 +249,7 @@ public class MovieContentProvider extends ContentProvider {
     // framework in running smoothly. You can read more at:
     // http://developer.android.com/reference/android/content/ContentProvider.html#shutdown()
     @Override
-    @TargetApi(11)
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public void shutdown() {
         mOpenHelper.close();
         super.shutdown();

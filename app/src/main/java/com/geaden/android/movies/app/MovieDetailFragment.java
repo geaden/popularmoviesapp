@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.LayerDrawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -30,7 +31,11 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.geaden.android.movies.app.data.MovieContract;
+import com.geaden.android.movies.app.models.Trailer;
+import com.geaden.android.movies.app.rest.RestClient;
 import com.squareup.picasso.Picasso;
+
+import java.util.List;
 
 /**
  * Movie detail fragment.
@@ -219,15 +224,19 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                 finishCreatingMenu(menu, data);
             }
         }
-//        else {
-//            if ( null != toolbarView ) {
-//                Menu menu = toolbarView.getMenu();
-//                if ( null != menu ) menu.clear();
-//                // Locate MenuItem with ShareActionProvider
-//                toolbarView.inflateMenu(R.menu.menu_movie_detail);
-//                finishCreatingMenu(toolbarView.getMenu(), extMovieId);
-//            }
-//        }
+        // Query for the trailers
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                try {
+                    List<Trailer> trailers = RestClient.getsInstance().queryTrailers(extMovieId);
+                    Log.d(LOG_TAG, "Trailers " + trailers.size());
+                } catch (Throwable e) {
+                    Log.d(LOG_TAG, "Error fetching movie trailers", e);
+                }
+                return null;
+            }
+        }.execute();
     }
 
     /**

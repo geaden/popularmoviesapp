@@ -97,7 +97,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
 
             @Override
             public boolean onQueryTextChange(String query) {
-                Log.d(LOG_TAG, "Query text changed: " + query);
+                onMoveQueryChanged(query);
                 return true;
 
             }
@@ -174,16 +174,16 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
         String sortOrder = sp.getString(getString(R.string.pref_sort_key),
                 getString(R.string.pref_default_sort_order_value));
         if (sortOrder.equals(getString(R.string.pref_sort_popularity))) {
-            orderCol = MovieContract.MovieEntry.COLUMN_POPULARITY;
+            orderCol = MovieContract.MovieEntry.COLUMN_POPULARITY + " DESC LIMIT 20";
         } else if (sortOrder.equals(getString(R.string.pref_sort_rating))) {
-            orderCol = MovieContract.MovieEntry.COLUMN_VOTE_AVG;
+            orderCol = MovieContract.MovieEntry.COLUMN_VOTE_AVG + " DESC LIMIT 20";
         } else if (sortOrder.equals(getString(R.string.pref_sort_favourite))) {
             selection = MovieContract.FavoriteEntry.TABLE_NAME + "." +
                     MovieContract.FavoriteEntry.COLUMN_FAVORED_AT + " IS NOT NULL";
             selectionArgs = null;
-            orderCol = MovieContract.MovieEntry.COLUMN_POPULARITY;
+            orderCol = MovieContract.MovieEntry.COLUMN_POPULARITY + " DESC";
         } else {
-            orderCol = MovieContract.MovieEntry.COLUMN_POPULARITY;
+            orderCol = MovieContract.MovieEntry.COLUMN_POPULARITY + " DESC LIMIT 20";
         }
         // Keep movie query if there is already selections
         if (null != mMovieQuery && !mMovieQuery.isEmpty()) {
@@ -208,7 +208,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
                 MOVIE_PROJECTION,
                 selection,
                 selectionArgs,
-                orderCol + " DESC");
+                orderCol);
     }
 
     @Override
