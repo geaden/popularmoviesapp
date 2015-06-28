@@ -38,7 +38,7 @@
 
     <!-- Share -->
     <string name="action_share">Share</string>
-    <string name="movie_share_string">Check out
+    <string name="movie_share_string">Check this out
         <xliff:g id="movie_url">%1$s</xliff:g>
          <xliff:g id="movie_share_hashtag">%2$s</xliff:g>
     </string>
@@ -49,4 +49,14 @@
     <string name="favorites_remove">Remove from favorites</string>
     <string name="favorites_added">Added to favorites!</string>
     <string name="favorites_removed">Removed from favorites!</string>
+
+    <!-- Trailers -->
+    <string name="movie_trailers_header">Trailers:</string>
+    <string name="movie_review_title">Reviews:</string>
+    <string name="movie_trailer">Trailer 1</string>
+
+    <!-- Reviews -->
+    <string name="movie_review_author">A movie review by <xliff:g id="author">%1$s</xliff:g></string>
+    <string name="empty_trailers_list">No trailers available.</string>
+    <string name="empty_reviews_list">No reviews available.</string>
 </resources>

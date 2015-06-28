@@ -5,6 +5,10 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ListAdapter;
+import android.widget.ListView;
 
 import com.geaden.android.movies.app.sync.MovieSyncAdapter;
 
@@ -18,6 +22,8 @@ import java.util.Date;
  * @author Gennady Denisov
  */
 public class Utility {
+    private static final String BASE_TRAILER_URL = "http://www.youtube.com/watch?v=";
+
     /**
      * Gets preferred sort order from user settings
      * @param c the context to get SharedPreferences from
@@ -90,5 +96,51 @@ public class Utility {
             return dateStr.split("-")[0];
         }
         return null;
+    }
+
+    /**
+     * Constructs trailer url by adding key to base trailer url
+     * @param key the key of trailer
+     * @return trailer URL
+     */
+    public static String getTrailerUrl(String key) {
+        return BASE_TRAILER_URL + key;
+    }
+
+    /**
+     * Sets ListView height dynamically based on the height of the items.
+     * http://blog.lovelyhq.com/setting-listview-height-depending-on-the-items/
+     *
+     * @param listView to be resized
+     * @return true if the listView is successfully resized, false otherwise
+     */
+    public static boolean setListViewHeightBasedOnItems(ListView listView) {
+
+        ListAdapter listAdapter = listView.getAdapter();
+        if (listAdapter != null) {
+
+            int numberOfItems = listAdapter.getCount();
+
+            // Get total height of all items.
+            int totalItemsHeight = 0;
+            for (int itemPos = 0; itemPos < numberOfItems; itemPos++) {
+                View item = listAdapter.getView(itemPos, null, listView);
+                item.measure(0, 0);
+                totalItemsHeight += item.getMeasuredHeight();
+            }
+
+            // Get total height of all item dividers.
+            int totalDividersHeight = listView.getDividerHeight() *
+                    (numberOfItems - 1);
+
+            // Set list height.
+            ViewGroup.LayoutParams params = listView.getLayoutParams();
+            params.height = totalItemsHeight + totalDividersHeight;
+            listView.setLayoutParams(params);
+            listView.requestLayout();
+            return true;
+        } else {
+            return false;
+        }
     }
 }

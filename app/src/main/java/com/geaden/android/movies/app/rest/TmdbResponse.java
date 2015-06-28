@@ -7,10 +7,10 @@ import java.util.List;
  *
  * @author Gennady Denisov
  */
-public class TmdbResponse<Item> {
-    private List<Item> results;
+public class TmdbResponse<TmdbEntity> {
+    private List<TmdbEntity> results;
 
-    public List<Item> getResults() {
+    public List<TmdbEntity> getResults() {
         return results;
     }
 }

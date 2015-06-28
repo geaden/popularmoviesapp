@@ -20,9 +20,14 @@ import android.util.Log;
 
 import com.geaden.android.movies.app.R;
 import com.geaden.android.movies.app.Utility;
+import com.geaden.android.movies.app.data.MovieContract;
 import com.geaden.android.movies.app.data.MovieContract.MovieEntry;
 import com.geaden.android.movies.app.data.MovieContract.FavoriteEntry;
+import com.geaden.android.movies.app.data.MovieContract.TrailerEntry;
+import com.geaden.android.movies.app.data.MovieContract.ReviewEntry;
 import com.geaden.android.movies.app.models.Movie;
+import com.geaden.android.movies.app.models.Review;
+import com.geaden.android.movies.app.models.Trailer;
 import com.geaden.android.movies.app.rest.RestClient;
 import com.geaden.android.movies.app.rest.UnauthorizedException;
 
@@ -171,7 +176,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
      * Helper method to store list of movies in database
      * @param movieList the list of movies
      */
-    private void addMovies(List<Movie> movieList) {
+    private void addMovies(final List<Movie> movieList) {
         // Insert the new movies data into the database
         Vector<ContentValues> cVVector = new Vector<ContentValues>(movieList.size());
         for (Movie movie : movieList) {
@@ -219,6 +224,80 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         }
         Log.d(LOG_TAG, "Sync Complete. " + cVVector.size() + " inserted.");
         setConnectionStatus(getContext(), CONNECTION_OK);
+        // Sync trailers and reviews
+        // Due to API restrictions (40 requests at the time)
+        // no way to perform this in parallel
+        addTrailers(movieList);
+        addReviews(movieList);
+    }
+
+    /**
+     * Retrieves trailers and store in internal database
+     * @param movieList the list of available movies
+     */
+    private void addTrailers(List<Movie> movieList) {
+        for (Movie movie : movieList) {
+            try {
+                List<Trailer> trailers = RestClient.getsInstance().queryTrailers(movie.getId());
+                Vector<ContentValues> cVVector = new Vector<ContentValues>();
+                for (Trailer trailer : trailers) {
+                    ContentValues cv = new ContentValues();
+                    cv.put(TrailerEntry.COLUMN_MOVIE_ID, movie.getId());
+                    cv.put(TrailerEntry.COLUMN_TRAILER_ID, trailer.getId());
+                    cv.put(TrailerEntry.COLUMN_NAME, trailer.getName());
+                    cv.put(TrailerEntry.COLUMN_KEY, trailer.getKey());
+                    cv.put(TrailerEntry.COLUMN_ISO_639_1, trailer.getIso6391());
+                    cv.put(TrailerEntry.COLUMN_SIZE, trailer.getSize());
+                    cv.put(TrailerEntry.COLUMN_SITE, trailer.getSite());
+                    cv.put(TrailerEntry.COLUMN_TYPE, trailer.getType());
+                    cVVector.add(cv);
+                }
+
+                // Add trailers to database
+                if (cVVector.size() > 0) {
+                    ContentValues[] cvArray = new ContentValues[cVVector.size()];
+                    cVVector.toArray(cvArray);
+                    getContext().getContentResolver().bulkInsert(TrailerEntry.CONTENT_URI, cvArray);
+                }
+                Log.d(LOG_TAG, "Sync Trailers Complete. " + cVVector.size() + " inserted.");
+                setConnectionStatus(getContext(), CONNECTION_OK);
+            } catch (Throwable e) {
+                setConnectionStatus(getContext(), CONNECTION_SERVER_INVALID);
+            }
+        }
+    }
+
+    /**
+     * Retrieves trailers and store in internal database
+     * @param movieList the list of available movies
+     */
+    private void addReviews(List<Movie> movieList) {
+        for (Movie movie : movieList) {
+            try {
+                List<Review> reviews = RestClient.getsInstance().queryReviews(movie.getId());
+                Vector<ContentValues> cVVector = new Vector<ContentValues>();
+                for (Review review : reviews) {
+                    ContentValues cv = new ContentValues();
+                    cv.put(ReviewEntry.COLUMN_MOVIE_ID, movie.getId());
+                    cv.put(ReviewEntry.COLUMN_REVIEW_ID, review.getId());
+                    cv.put(ReviewEntry.COLUMN_AUTHOR, review.getAuthor());
+                    cv.put(ReviewEntry.COLUMN_CONTENT, review.getContent());
+                    cv.put(ReviewEntry.COLUMN_URL, review.getUrl());
+                    cVVector.add(cv);
+                }
+
+                // Add reviews to database
+                if (cVVector.size() > 0) {
+                    ContentValues[] cvArray = new ContentValues[cVVector.size()];
+                    cVVector.toArray(cvArray);
+                    getContext().getContentResolver().bulkInsert(ReviewEntry.CONTENT_URI, cvArray);
+                }
+                Log.d(LOG_TAG, "Sync Reviews Complete. " + cVVector.size() + " inserted.");
+                setConnectionStatus(getContext(), CONNECTION_OK);
+            } catch (Throwable e) {
+                setConnectionStatus(getContext(), CONNECTION_SERVER_INVALID);
+            }
+        }
     }
 
     /**

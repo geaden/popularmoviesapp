@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -124,9 +125,10 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Cursor cursor = mMoviesAdapter.getCursor();
                 if (cursor != null && cursor.moveToPosition(position)) {
-                    long movieId = cursor.getLong(_ID);
-                    Intent intent = new Intent(getActivity(), MovieDetailActivity.class);
-                    intent.putExtra(MovieDetailFragment.MOVIE_DETAIL_ID, movieId);
+                    long movieId = cursor.getLong(MOVIE_ID);
+                    Uri contentUri = MovieContract.MovieEntry.buildMovieUri(movieId);
+                    Intent intent = new Intent(getActivity(), MovieDetailActivity.class)
+                            .setData(contentUri);
                     startActivity(intent);
                 }
             }
@@ -216,7 +218,8 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
         if (key.equals(getString(R.string.pref_conn_status_key))) {
             updateEmptyView();
         } else if (key.equals(getString(R.string.pref_sort_key))) {
-            // Reload our data
+            // Reload the data
+            Log.d(LOG_TAG, "Sort order changed. Reload data");
             getActivity().getSupportLoaderManager().restartLoader(MOVIES_LOADER, null, this);
         }
     }

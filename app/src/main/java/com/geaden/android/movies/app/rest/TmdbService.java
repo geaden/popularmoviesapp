@@ -1,6 +1,7 @@
 package com.geaden.android.movies.app.rest;
 
 import com.geaden.android.movies.app.models.Movie;
+import com.geaden.android.movies.app.models.Review;
 import com.geaden.android.movies.app.models.Trailer;
 
 import java.util.List;
@@ -25,4 +26,7 @@ public interface TmdbService {
 
     @GET("/movie/{id}/videos")
     TmdbResponse<Trailer> queryTrailers(@Path("id") long movieId, @Query("api_key") String apiKey) throws Throwable;
+
+    @GET("/movie/{id}/reviews")
+    TmdbResponse<Review> queryReviews(@Path("id") long movieId, @Query("api_key") String apiKey) throws Throwable;
 }

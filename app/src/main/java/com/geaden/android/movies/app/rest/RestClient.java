@@ -1,6 +1,7 @@
 package com.geaden.android.movies.app.rest;
 
 import com.geaden.android.movies.app.models.Movie;
+import com.geaden.android.movies.app.models.Review;
 import com.geaden.android.movies.app.models.Trailer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -66,6 +67,17 @@ public class RestClient {
      */
     public List<Trailer> queryTrailers(long movieId) throws  Throwable {
         TmdbResponse<Trailer> resp = sService.queryTrailers(movieId, TMDB_API_KEY);
+        return resp.getResults();
+    }
+
+    /**
+     * Gets list of reviews for the movie by calling TMDB Api
+     * @param movieId the movie id to get reviews for
+     * @return list of {@link Review}
+     * @throws Throwable
+     */
+    public List<Review> queryReviews(long movieId) throws Throwable {
+        TmdbResponse<Review> resp = sService.queryReviews(movieId, TMDB_API_KEY);
         return resp.getResults();
     }
 }
