@@ -96,7 +96,7 @@ public class MovieContract {
         public static final String CONTENT_ITEM_TYPE =
                 ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_REVIEW;
 
-        public static final String TABLE_NAME = "review";
+        public static final String TABLE_NAME = "reviews";
         /** List of available columns **/
         public static final String COLUMN_REVIEW_ID = "review_id";
         /** External movie id **/

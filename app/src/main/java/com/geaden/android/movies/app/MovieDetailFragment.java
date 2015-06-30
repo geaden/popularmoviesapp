@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -27,7 +26,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
-import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RatingBar;
@@ -38,11 +36,7 @@ import android.widget.ToggleButton;
 import com.geaden.android.movies.app.adapters.ReviewsAdapter;
 import com.geaden.android.movies.app.adapters.TrailersAdapter;
 import com.geaden.android.movies.app.data.MovieContract;
-import com.geaden.android.movies.app.models.Trailer;
-import com.geaden.android.movies.app.rest.RestClient;
 import com.squareup.picasso.Picasso;
-
-import java.util.List;
 
 /**
  * Movie detail fragment.
@@ -104,7 +98,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     private Uri mUri;
     private ListView mTrailersList;
     private ListView mReviewsList;
-    private TrailersAdapter mTrailerAdapter;
+    private TrailersAdapter mTrailersAdapter;
     private ReviewsAdapter mReviewsAdapter;
 
     public MovieDetailFragment() {
@@ -177,15 +171,15 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         mMovieReleaseDate = (TextView) rootView.findViewById(R.id.movie_detail_release_date);
         // Trailers list
         mTrailersList = (ListView) rootView.findViewById(R.id.movie_trailers_list);
-        mTrailerAdapter = new TrailersAdapter(getActivity(), null, 0);
-        mTrailersList.setAdapter(mTrailerAdapter);
+        mTrailersAdapter = new TrailersAdapter(getActivity(), null, 0);
+        mTrailersList.setAdapter(mTrailersAdapter);
         TextView emptyTrailersTextView = (TextView) rootView.findViewById(R.id.trailers_empty);
         mTrailersList.setEmptyView(emptyTrailersTextView);
         mTrailersList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if ( null != mTrailerAdapter) {
-                    Cursor cursor = mTrailerAdapter.getCursor();
+                if ( null != mTrailersAdapter) {
+                    Cursor cursor = mTrailersAdapter.getCursor();
                     if (cursor != null && cursor.moveToPosition(position)) {
                         String trailerKey = cursor.getString(INDEX_TRAILER_KEY);
                         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(Utility.getTrailerUrl(trailerKey)));
@@ -313,7 +307,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                 break;
             case MOVIE_TRAILERS_LOADER:
                 Log.d(LOG_TAG, "Trailers: " + data.getCount());
-                mTrailerAdapter.swapCursor(data);
+                mTrailersAdapter.swapCursor(data);
                 Utility.setListViewHeightBasedOnItems(mTrailersList);
                 break;
             case MOVIE_REVIEWS_LOADER:
@@ -369,9 +363,9 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         if (loader.getId() == MOVIE_TRAILERS_LOADER) {
-            mTrailerAdapter.swapCursor(null);
+            mTrailersAdapter.swapCursor(null);
         } else if (loader.getId() == MOVIE_REVIEWS_LOADER) {
-            mTrailerAdapter.swapCursor(null);
+            mReviewsAdapter.swapCursor(null);
         }
 
     }

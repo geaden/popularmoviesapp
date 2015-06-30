@@ -169,14 +169,35 @@ public class MovieContentProvider extends ContentProvider {
     public Uri insert(Uri uri, ContentValues values) {
         final int match = sUriMatcher.match(uri);
         Uri returnUri;
+        long _id;
         switch (match) {
             case MOVIE:
-                long _id = mOpenHelper.getWritableDatabase().insert(
+                _id = mOpenHelper.getWritableDatabase().insert(
                         MovieContract.MovieEntry.TABLE_NAME,
                         null,
                         values);
                 if ( _id > 0 )
                     returnUri = MovieContract.MovieEntry.buildMovieUri(_id);
+                else
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                break;
+            case TRAILER:
+                _id = mOpenHelper.getWritableDatabase().insert(
+                        MovieContract.TrailerEntry.TABLE_NAME,
+                        null,
+                        values);
+                if ( _id > 0 )
+                    returnUri = MovieContract.TrailerEntry.buildTrailerUri(_id);
+                else
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                break;
+            case REVIEW:
+                _id = mOpenHelper.getWritableDatabase().insert(
+                        MovieContract.ReviewEntry.TABLE_NAME,
+                        null,
+                        values);
+                if ( _id > 0 )
+                    returnUri = MovieContract.ReviewEntry.buildReviewUri(_id);
                 else
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 break;
@@ -216,7 +237,7 @@ public class MovieContentProvider extends ContentProvider {
                         whereClause,
                         whereArgs);
                 if (rowsDeleted != 0) {
-                    // Notify the movie is removed from favorites
+                    // Notify the movie was removed from favorites
                     getContext().getContentResolver().notifyChange(MovieContract.MovieEntry.CONTENT_URI, null);
                 }
                 break;

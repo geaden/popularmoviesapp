@@ -77,7 +77,7 @@ public class MovieDbHelper extends SQLiteOpenHelper {
         // TODO: Add foreign keys?
         final String SQL_CREATE_REVIEWS_TABLE = "CREATE TABLE " + ReviewEntry.TABLE_NAME + " (" +
                 ReviewEntry._ID + " INTEGER PRIMARY KEY, " +
-                ReviewEntry.COLUMN_REVIEW_ID + " INTEGER NOT NULL," +
+                ReviewEntry.COLUMN_REVIEW_ID + " TEXT NOT NULL," +
                 ReviewEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL," +
                 ReviewEntry.COLUMN_AUTHOR + " TEXT NOT NULL," +
                 ReviewEntry.COLUMN_CONTENT + " TEXT NOT NULL," +

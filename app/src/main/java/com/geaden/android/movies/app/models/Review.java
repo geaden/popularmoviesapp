@@ -6,12 +6,12 @@ package com.geaden.android.movies.app.models;
  * @author Gennady Denisov
  */
 public class Review {
-    private long id;
+    private String id;
     private String author;
     private String content;
     private String url;
 
-    public long getId() {
+    public String getId() {
         return id;
     }
 
