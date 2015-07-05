@@ -143,4 +143,26 @@ public class Utility {
             return false;
         }
     }
+
+    /**
+     * Checks if movie data is fully fetched from TMDB
+     * @param ctx the Context to get SharedPreference
+     * @return if movie data fully fetched
+     */
+    public static boolean isFullFetched(Context ctx) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+        return sp.getBoolean(ctx.getString(R.string.fully_fetched_data), false);
+    }
+
+    /**
+     * Sets if movie data was fully fetched to reduce TMDB API calls
+     * @param ctx the Context to get SharedPreferences
+     * @param fetched if movie data fully fetched
+     */
+    public static void setFullyFetched(Context ctx, boolean fetched) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+        SharedPreferences.Editor esp = sp.edit();
+        esp.putBoolean(ctx.getString(R.string.fully_fetched_data), fetched);
+        esp.commit();
+    }
 }

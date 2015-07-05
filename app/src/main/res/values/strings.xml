@@ -20,6 +20,8 @@
     <string name="sync_account_type" translatable="false">movies.geaden.com</string>
     <string name="content_authority" translatable="false">com.geaden.android.movies.app</string>
 
+    <string name="fully_fetched_data" translatable="false">fully_fetched</string>
+
     <!-- Empty view -->
     <string name="empty_movie_list">Movies not available</string>
     <string name="empty_movie_list_server_down">Movies not available. Server is down.</string>
@@ -53,7 +55,6 @@
     <!-- Trailers -->
     <string name="movie_trailers_header">Trailers:</string>
     <string name="movie_review_title">Reviews:</string>
-    <string name="movie_trailer">Trailer 1</string>
 
     <!-- Reviews -->
     <string name="movie_review_author">A movie review by <xliff:g id="author">%1$s</xliff:g></string>

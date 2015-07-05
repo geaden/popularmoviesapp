@@ -83,7 +83,10 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
         if (key.equals(getString(R.string.pref_sort_key))) {
             if (!sharedPreferences.getString(key, getString(R.string.pref_default_sort_order_value))
                     .equals(getString(R.string.pref_sort_favourite))) {
-                MovieSyncAdapter.syncImmediately(this);
+                if (!Utility.isFullFetched(this)) {
+                    MovieSyncAdapter.syncImmediately(this);
+                    Utility.setFullyFetched(this, true);
+                }
             }
         }
     }

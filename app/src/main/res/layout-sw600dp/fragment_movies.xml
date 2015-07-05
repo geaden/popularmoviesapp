@@ -9,15 +9,17 @@
     <TextView
         android:id="@+id/movies_empty"
         android:text="@string/empty_movie_list"
+        tools:visibility="gone"
         style="@style/Movie.Empty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <GridView xmlns:android="http://schemas.android.com/apk/res/android"
+    <GridView
         android:id="@+id/movies_grid"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:numColumns="3"
+        style="@style/MovieGridStyle"
         android:stretchMode="columnWidth"
         tools:listitem="@layout/movie_grid_item"
         android:gravity="center"/>

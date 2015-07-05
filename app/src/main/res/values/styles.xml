@@ -90,6 +90,12 @@
     <style name="Movie.ReviewContent" parent="Movie.ReviewBase">
         <item name="android:textSize">@dimen/movie_review_content_size</item>
         <item name="android:textStyle">normal</item>
-
     </style>
+
+    <!-- Movie grid style -->
+    <style name="MovieGridStyle">
+        <item name="android:numColumns">auto_fit</item>
+        <item name="android:stretchMode">columnWidth</item>
+    </style>
+
 </resources>

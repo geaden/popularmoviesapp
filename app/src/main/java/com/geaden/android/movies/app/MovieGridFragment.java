@@ -22,6 +22,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.geaden.android.movies.app.adapters.MoviesAdapter;
@@ -40,6 +41,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     private final int MOVIES_LOADER = 0;
 
     private MoviesAdapter mMoviesAdapter;
+    private int mPosition = GridView.INVALID_POSITION;
     private String LOG_TAG = getClass().getSimpleName();
 
     private String mMovieQuery;
@@ -126,14 +128,22 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
                 Cursor cursor = mMoviesAdapter.getCursor();
                 if (cursor != null && cursor.moveToPosition(position)) {
                     long movieId = cursor.getLong(MOVIE_ID);
-                    Uri contentUri = MovieContract.MovieEntry.buildMovieUri(movieId);
-                    Intent intent = new Intent(getActivity(), MovieDetailActivity.class)
-                            .setData(contentUri);
-                    startActivity(intent);
+                    Uri movieUri = MovieContract.MovieEntry.buildMovieUri(movieId);
+                    Log.d(LOG_TAG, "Selected movie url " + movieUri);
+                    ((Callback) getActivity()).onItemSelected(movieUri);
+                    mPosition = position;
+                    mMoviesGrid.setItemChecked(mPosition, true);
                 }
             }
         });
         return rootView;
+    }
+
+    /**
+     * Interface when item selected
+     */
+    public interface Callback {
+        void onItemSelected(Uri movieUri);
     }
 
     /**
@@ -266,6 +276,15 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         Log.d(LOG_TAG, "Data " + data.getCount());
         mMoviesAdapter.swapCursor(data);
+        if (mPosition != GridView.INVALID_POSITION) {
+            // If we don't need to restart the loader, and there's a desired position to restore
+            // to, do so now.
+            mMoviesGrid.smoothScrollToPosition(mPosition);
+        }
+        updateEmptyView();
+        if (mMoviesAdapter.getCount() > 0) {
+            mPosition = 0;
+        }
     }
 
     @Override

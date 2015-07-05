@@ -43,6 +43,13 @@ import java.util.Vector;
  * @author Gennady Denisov
  */
 public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
+    // Indicates if periodic sync is running
+    private static boolean mPeriodic;
+
+    static  {
+        mPeriodic = true;
+    }
+
     private static final String LOG_TAG = MovieSyncAdapter.class.getSimpleName();
 
     public static final int CONNECTION_OK = 0;
@@ -52,7 +59,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     public static final int CONNECTION_SYNC = 4;
 
     // Interval at which to sync with the TMDB, in seconds.
-    public static final int SYNC_INTERVAL = 60 * 180;
+    public static final int SYNC_INTERVAL = 10; // * 60 * 3;
     public static final int SYNC_FLEXTIME = SYNC_INTERVAL / 3;
 
     @Retention(RetentionPolicy.SOURCE)
@@ -92,6 +99,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         Bundle bundle = new Bundle();
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        mPeriodic = false;
          /*
          * Request the sync for the default account, authority, and
          * manual sync settings
@@ -197,33 +205,17 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
         // add to database
         if ( cVVector.size() > 0 ) {
-            // delete old data so we don't build up an endless history
-            Cursor favoredCursor = getContext().getContentResolver().query(
-                    FavoriteEntry.CONTENT_URI,
-                    new String[]{FavoriteEntry.COLUMN_MOVIE_ID},
-                    null,
-                    null,
-                    null);
-            List<String> favored = new ArrayList<String>(favoredCursor.getCount());
-            List<String> parameters = new ArrayList<String>(favoredCursor.getCount());
-            while (favoredCursor.moveToNext()) {
-                favored.add(favoredCursor.getString(favoredCursor.getColumnIndex(
-                        FavoriteEntry.COLUMN_MOVIE_ID)));
-                parameters.add("?");
-            }
-            // We're done. Now we have a list of favored movies.
-            favoredCursor.close();
-            Log.d(LOG_TAG, "Favored movies: " + TextUtils.join(", ", favored));
-            // Delete all movies except favored ones
-            getContext().getContentResolver().delete(MovieEntry.CONTENT_URI,
-                    MovieEntry.COLUMN_MOVIE_ID + " NOT IN (" + TextUtils.join(", ", parameters) +
-                            ")", favored.toArray(new String[favored.size()]));
             ContentValues[] cvArray = new ContentValues[cVVector.size()];
             cVVector.toArray(cvArray);
             getContext().getContentResolver().bulkInsert(MovieEntry.CONTENT_URI, cvArray);
         }
         Log.d(LOG_TAG, "Sync Complete. " + cVVector.size() + " inserted.");
         setConnectionStatus(getContext(), CONNECTION_OK);
+        if (mPeriodic) {
+            // Periodic sync running. Request fetch when user change preferences
+            Log.d(LOG_TAG, "Set fully fetched to false");
+            Utility.setFullyFetched(getContext(), false);
+        }
         // Sync trailers and reviews
         // Due to API restrictions (40 requests at the time)
         // no way to perform this in parallel

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="MovieGridStyle">
+        <item name="android:numColumns">@integer/movie_num_columns</item>
+        <item name="android:stretchMode">columnWidth</item>
+        <item name="android:choiceMode">singleChoice</item>
+    </style>
+</resources>

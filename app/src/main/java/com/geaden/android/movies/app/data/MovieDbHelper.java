@@ -49,8 +49,7 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                 MovieEntry.COLUMN_VOTE_COUNT + " INTEGER NOT NULL, " +
                 MovieEntry.COLUMN_RELEASE_DATE + " TEXT, " +
                 // Provide uniqueness of external movie id
-                " UNIQUE (" + MovieEntry.COLUMN_MOVIE_ID + "," +
-                MovieEntry._ID + ") ON CONFLICT REPLACE);";
+                " UNIQUE (" + MovieEntry.COLUMN_MOVIE_ID + ") ON CONFLICT REPLACE);";
         final String SQL_CREATE_FAVORITES_TABLE = "CREATE TABLE " + FavoriteEntry.TABLE_NAME + " (" +
                 FavoriteEntry._ID + " INTEGER PRIMARY KEY, " +
                 FavoriteEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +

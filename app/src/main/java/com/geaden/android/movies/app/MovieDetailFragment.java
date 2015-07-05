@@ -154,6 +154,17 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        Bundle arguments = getArguments();
+        if (arguments != null && arguments.containsKey(MOVIE_DETAIL_URI)) {
+            getLoaderManager().restartLoader(MOVIE_DETAIL_LOADER, null, this);
+            getLoaderManager().restartLoader(MOVIE_TRAILERS_LOADER, null, this);
+            getLoaderManager().restartLoader(MOVIE_REVIEWS_LOADER, null, this);
+        }
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -161,6 +172,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         Bundle arguments = getArguments();
         if (arguments != null) {
             mUri = arguments.getParcelable(MOVIE_DETAIL_URI);
+            Log.d(LOG_TAG, "mUri " + mUri);
             mMovieId = ContentUris.parseId(mUri);
         }
         mMovieTitle = (TextView) rootView.findViewById(R.id.movie_detail_title);
@@ -227,6 +239,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        Log.d(LOG_TAG, "Movie id " + mMovieId);
         switch (id) {
             case MOVIE_DETAIL_LOADER:
                 return new CursorLoader(
