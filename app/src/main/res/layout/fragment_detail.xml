@@ -4,10 +4,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    tools:backround="@android:color/white"
     tools:context=".MovieDetailFragment">
 
     <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
+        android:id="@+id/detail_toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="?attr/actionBarSize"
@@ -77,11 +78,19 @@
                 android:adjustViewBounds="true"
                 tools:src="@drawable/poster"/>
 
+            <!-- Movie release date icon -->
+            <ImageView
+                android:layout_toRightOf="@id/movie_detail_poster"
+                android:id="@+id/movie_release_date_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_film_reel" />
+
             <!-- Movie release date -->
             <TextView
                 android:id="@+id/movie_detail_release_date"
                 style="@style/Movie.ReleaseDate"
-                android:layout_toRightOf="@id/movie_detail_poster"
+                android:layout_toRightOf="@id/movie_release_date_icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:text="2015"/>

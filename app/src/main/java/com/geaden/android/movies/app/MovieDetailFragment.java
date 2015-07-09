@@ -146,7 +146,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.menu_movie_detail, menu);
+        // inflater.inflate(R.menu.menu_movie_detail, menu);
     }
 
     @Override
@@ -297,25 +297,23 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                 }
 
                 AppCompatActivity activity = (AppCompatActivity) getActivity();
-                Toolbar toolbarView = (Toolbar) getView().findViewById(R.id.toolbar);
+                Toolbar toolbarView = (Toolbar) getView().findViewById(R.id.detail_toolbar);
 
-                // We need to start the enter transition after the data has loaded
-                if (activity instanceof MovieDetailActivity) {
-                    activity.supportStartPostponedEnterTransition();
-                    if ( null != toolbarView ) {
+                if ( null != toolbarView ) {
+                    if (activity instanceof MovieDetailActivity) {
                         activity.setSupportActionBar(toolbarView);
                         activity.getSupportActionBar().setDisplayShowTitleEnabled(false);
                         activity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-                        Menu menu = toolbarView.getMenu();
-                        if ( null != menu ) menu.clear();
-                        // Locate MenuItem with ShareActionProvider
-                        toolbarView.inflateMenu(R.menu.menu_movie_detail);
-                        mFavourite = data.getLong(MovieGridFragment.FAVORED_AT) > 0;
-                        ToggleButton favouriteToggle = (ToggleButton) toolbarView.findViewById(R.id.favourite_toggle_btn);
-                        favouriteToggle.setChecked(mFavourite);
-                        favouriteToggle.setOnCheckedChangeListener(new FavoriteCheckedListener());
-                        finishCreatingMenu(menu, data);
                     }
+                    Menu menu = toolbarView.getMenu();
+                    if ( null != menu ) menu.clear();
+                    // Locate MenuItem with ShareActionProvider
+                    toolbarView.inflateMenu(R.menu.menu_movie_detail);
+                    mFavourite = data.getLong(MovieGridFragment.FAVORED_AT) > 0;
+                    ToggleButton favouriteToggle = (ToggleButton) toolbarView.findViewById(R.id.favourite_toggle_btn);
+                    favouriteToggle.setChecked(mFavourite);
+                    favouriteToggle.setOnCheckedChangeListener(new FavoriteCheckedListener());
+                    finishCreatingMenu(menu, data);
                 }
                 break;
             case MOVIE_TRAILERS_LOADER:

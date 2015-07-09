@@ -165,4 +165,16 @@ public class Utility {
         esp.putBoolean(ctx.getString(R.string.fully_fetched_data), fetched);
         esp.commit();
     }
+
+    /**
+     * Sets movie sorting order
+     * @param ctx the Context to get SharedPreferences
+     * @param sortOrderValue sorting order to be set
+     */
+    public static void setSortOrder(Context ctx, String sortOrderValue) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+        SharedPreferences.Editor ed = sp.edit();
+        ed.putString(ctx.getString(R.string.pref_sort_key), sortOrderValue);
+        ed.commit();
+    }
 }

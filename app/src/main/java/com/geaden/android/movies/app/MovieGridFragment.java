@@ -36,6 +36,7 @@ import com.geaden.android.movies.app.sync.MovieSyncAdapter;
 public class MovieGridFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
         SharedPreferences.OnSharedPreferenceChangeListener {
 
+    private static final String SELECTED_KEY = "selected";
     protected GridView mMoviesGrid;
 
     private final int MOVIES_LOADER = 0;
@@ -131,11 +132,21 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
                     Uri movieUri = MovieContract.MovieEntry.buildMovieUri(movieId);
                     Log.d(LOG_TAG, "Selected movie url " + movieUri);
                     ((Callback) getActivity()).onItemSelected(movieUri);
-                    mPosition = position;
-                    mMoviesGrid.setItemChecked(mPosition, true);
+                    mMoviesGrid.setItemChecked(position, true);
                 }
+                setActivatedPosition(mPosition);
             }
         });
+        // If there's instance state, mine it for useful information.
+        // The end-goal here is that the user never knows that turning their device sideways
+        // does crazy lifecycle related things.  It should feel like some stuff stretched out,
+        // or magically appeared to take advantage of room, but data or place in the app was never
+        // actually *lost*.
+        if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)) {
+            // The gridview probably hasn't even been populated yet.  Actually perform the
+            // swapout in onLoadFinished.
+            mPosition = savedInstanceState.getInt(SELECTED_KEY);
+        }
         return rootView;
     }
 
@@ -157,8 +168,8 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
         getActivity().getSupportLoaderManager().initLoader(MOVIES_LOADER, null, this);
+        super.onActivityCreated(savedInstanceState);
     }
 
     @Override
@@ -166,6 +177,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         sp.registerOnSharedPreferenceChangeListener(this);
         super.onResume();
+        getLoaderManager().restartLoader(MOVIES_LOADER, null, this);
     }
 
     @Override
@@ -181,7 +193,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
         String[] selectionArgs = null;
         // Get the column name to order the result
         String orderCol;
-        // Get the sor order
+        // Get the sort order
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String sortOrder = sp.getString(getString(R.string.pref_sort_key),
                 getString(R.string.pref_default_sort_order_value));
@@ -273,6 +285,17 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        // When tablets rotate, the currently selected list item needs to be saved.
+        // When no item is selected, mPosition will be set to Listview.INVALID_POSITION,
+        // so check for that before storing.
+        if (mPosition != GridView.INVALID_POSITION) {
+            outState.putInt(SELECTED_KEY, mPosition);
+        }
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         Log.d(LOG_TAG, "Data " + data.getCount());
         mMoviesAdapter.swapCursor(data);
@@ -281,10 +304,23 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             // to, do so now.
             mMoviesGrid.smoothScrollToPosition(mPosition);
         }
-        updateEmptyView();
         if (mMoviesAdapter.getCount() > 0) {
-            mPosition = 0;
+            setActivatedPosition(0);
         }
+        updateEmptyView();
+    }
+
+    /**
+     * Activates current position
+     * @param position the position to be activated.
+     */
+    private void setActivatedPosition(int position) {
+        if (position == GridView.INVALID_POSITION) {
+            mMoviesGrid.setItemChecked(mPosition, false);
+        } else {
+            mMoviesGrid.setItemChecked(position, true);
+        }
+        mPosition = position;
     }
 
     @Override

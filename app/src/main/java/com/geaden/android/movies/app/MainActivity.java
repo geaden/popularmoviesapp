@@ -1,9 +1,13 @@
 package com.geaden.android.movies.app;
 
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -17,6 +21,11 @@ public class MainActivity extends AppCompatActivity implements MovieGridFragment
     private Toolbar mToolbar;
     // Indicates if two pane mode should be used
     private boolean mTwoPane;
+
+    // Sort orders
+    private final int POPULARITY = 0;
+    private final int HIGHEST_RATE = 1;
+    private final int FAVOURITE = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,12 +86,46 @@ public class MainActivity extends AppCompatActivity implements MovieGridFragment
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            Intent settingsIntent = new Intent(this, SettingsActivity.class);
-            startActivity(settingsIntent);
-            return true;
+        if (id == R.id.action_sort) {
+            // Prepare sort order dialog
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            // Get currently selected sort order
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            String currentOrder = sp.getString(getString(R.string.pref_sort_key),
+                    getString(R.string.pref_default_sort_order_value));
+            int checkedItem = POPULARITY;
+            if (currentOrder.equals(getString(R.string.pref_sort_rating))) {
+                checkedItem = HIGHEST_RATE;
+            } else if (currentOrder.equals(getString(R.string.pref_sort_favourite))) {
+                checkedItem = FAVOURITE;
+            }
+            builder.setTitle(R.string.pref_sort_title)
+                    // Specify the list array, the items to be selected by default (null for none),
+                    // and the listener through which to receive callbacks when items are selected
+                    .setSingleChoiceItems(R.array.sort_by, checkedItem,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    switch (which) {
+                                        case POPULARITY:
+                                            Utility.setSortOrder(getApplicationContext(),
+                                                    getString(R.string.pref_sort_popularity));
+                                            break;
+                                        case HIGHEST_RATE:
+                                            Utility.setSortOrder(getApplicationContext(),
+                                                    getString(R.string.pref_sort_rating));
+                                            break;
+                                        case FAVOURITE:
+                                            Utility.setSortOrder(getApplicationContext(),
+                                                    getString(R.string.pref_sort_favourite));
+                                            break;
+                                    }
+                                    dialog.dismiss();
+                                }
+                            });
+            AlertDialog dialog = builder.create();
+            // Display the dialog
+            dialog.show();
         }
 
         return super.onOptionsItemSelected(item);

@@ -34,6 +34,7 @@ public class MoviesAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder viewHolder = (ViewHolder) view.getTag();
+        if (cursor.isClosed()) return;
         String posterPath = cursor.getString(MovieGridFragment.POSTER_PATH);
         String title = cursor.getString(MovieGridFragment.TITLE);
         boolean isFavourite = cursor.getLong(MovieGridFragment.FAVORED_AT) > 0;
