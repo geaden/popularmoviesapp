@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements MovieGridFragment
             // fragment transaction
             if (savedInstanceState != null) {
                 getSupportFragmentManager().beginTransaction()
+                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
                         .replace(R.id.movie_detail_container, new MovieDetailFragment(), MOVIEDETAILFRAGMENT_TAG)
                         .commit();
             }
@@ -60,15 +61,13 @@ public class MainActivity extends AppCompatActivity implements MovieGridFragment
             // fragment transaction.
             Bundle args = new Bundle();
             args.putParcelable(MovieDetailFragment.MOVIE_DETAIL_URI, movieUri);
-
-            Fragment fragment = MovieDetailFragment.getInstance(args);
+            Fragment fragment = MovieDetailFragment.newInstance(args);
 
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.movie_detail_container, fragment, MOVIEDETAILFRAGMENT_TAG)
                     .commit();
         } else {
-            Intent intent = new Intent(this, MovieDetailActivity.class)
-                    .setData(movieUri);
+            Intent intent = new Intent(this, MovieDetailActivity.class).setData(movieUri);
             startActivity(intent);
         }
     }

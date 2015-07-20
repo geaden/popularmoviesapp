@@ -52,6 +52,7 @@ public class MovieContract {
         public static final String COLUMN_POSTER_PATH = "poster_path";
         public static final String COLUMN_BACKDROP_PATH = "backdrop_path";
         public static final String COLUMN_RELEASE_DATE = "release_date";
+        public static final String COLUMN_SORT_ORDER = "sort_order";
 
         public static Uri buildMovieUri(long movieId) {
             return ContentUris.withAppendedId(CONTENT_URI, movieId);

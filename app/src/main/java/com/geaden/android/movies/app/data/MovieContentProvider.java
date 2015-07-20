@@ -73,7 +73,7 @@ public class MovieContentProvider extends ContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         Cursor retCursor;
         switch (sUriMatcher.match(uri)) {
-            // "movie/*"
+            // "movie/#"
             case MOVIE_ID: {
                 long movieId = ContentUris.parseId(uri);
                 retCursor = sMovieFavoritesBuilder.query(

@@ -10,30 +10,27 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SyncRequest;
 import android.content.SyncResult;
-import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.IntDef;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.geaden.android.movies.app.R;
 import com.geaden.android.movies.app.Utility;
 import com.geaden.android.movies.app.data.MovieContract;
 import com.geaden.android.movies.app.data.MovieContract.MovieEntry;
-import com.geaden.android.movies.app.data.MovieContract.FavoriteEntry;
-import com.geaden.android.movies.app.data.MovieContract.TrailerEntry;
 import com.geaden.android.movies.app.data.MovieContract.ReviewEntry;
+import com.geaden.android.movies.app.data.MovieContract.TrailerEntry;
+import com.geaden.android.movies.app.data.MovieDbHelper;
 import com.geaden.android.movies.app.models.Movie;
 import com.geaden.android.movies.app.models.Review;
 import com.geaden.android.movies.app.models.Trailer;
 import com.geaden.android.movies.app.rest.RestClient;
-import com.geaden.android.movies.app.rest.UnauthorizedException;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
@@ -43,13 +40,6 @@ import java.util.Vector;
  * @author Gennady Denisov
  */
 public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
-    // Indicates if periodic sync is running
-    private static boolean mPeriodic;
-
-    static  {
-        mPeriodic = true;
-    }
-
     private static final String LOG_TAG = MovieSyncAdapter.class.getSimpleName();
 
     public static final int CONNECTION_OK = 0;
@@ -59,8 +49,9 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     public static final int CONNECTION_SYNC = 4;
 
     // Interval at which to sync with the TMDB, in seconds.
-    public static final int SYNC_INTERVAL = 10; // * 60 * 3;
+    public static final int SYNC_INTERVAL = 60 * 60 * 3;
     public static final int SYNC_FLEXTIME = SYNC_INTERVAL / 3;
+    private static final String MANUAL_SYNC = "manual_sync";
 
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({CONNECTION_OK,
@@ -77,18 +68,48 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(LOG_TAG, "Starting sync");
-        setConnectionStatus(getContext(), CONNECTION_SYNC);
         String sortOrder = Utility.getPreferredSortOrder(getContext());
         try {
-            List<Movie> movieList = RestClient.getsInstance().queryMovies(sortOrder);
-            addMovies(movieList);
-        } catch (UnauthorizedException e) {
-            Log.e(LOG_TAG, "Error retrieving movies", e);
-            setConnectionStatus(getContext(), CONNECTION_UNKNOWN);
+            // Sync for current preferred sorting order
+            // Only if manual sync is not requested and
+            // for the requested order no movies at all
+            long movies = DatabaseUtils.longForQuery(
+                    MovieDbHelper.getInstance(getContext()).getReadableDatabase(),
+                    "SELECT COUNT(*) FROM " + MovieEntry.TABLE_NAME +
+                            " WHERE " + MovieEntry.COLUMN_SORT_ORDER + " = ?",
+                    new String[]{ sortOrder });
+            if (null != extras
+                    && extras.containsKey(MANUAL_SYNC)
+                    && extras.getBoolean(MANUAL_SYNC)
+                    && movies > 0) {
+                // Do not sync with TMDB, just show what already present in database
+                return;
+            } else {
+                setConnectionStatus(getContext(), CONNECTION_SYNC);
+                // Clean up outdated items
+                MovieDbHelper.getInstance(getContext()).getWritableDatabase().execSQL("DELETE FROM "
+                        + MovieEntry.TABLE_NAME + " WHERE "
+                        + MovieEntry.COLUMN_SORT_ORDER + " != ?  AND "
+                        + MovieEntry.COLUMN_MOVIE_ID +
+                        " NOT IN (SELECT " + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID +
+                        " FROM " + MovieContract.FavoriteEntry.TABLE_NAME + ")");
+                syncMovies(sortOrder);
+                setConnectionStatus(getContext(), CONNECTION_OK);
+                Log.d(LOG_TAG, "Sync completed.");
+            }
         } catch (Throwable e) {
             Log.e(LOG_TAG, "Unknown server error", e);
             setConnectionStatus(getContext(), CONNECTION_UNKNOWN);
         }
+    }
+
+    /**
+     * Performs movies synchronization
+     * @param sortOrder the sort order to perform sync for
+     */
+    private void syncMovies(String sortOrder) throws Throwable {
+        List<Movie> movieList = RestClient.getsInstance().queryMovies(sortOrder);
+        addMovies(movieList, sortOrder);
     }
 
     /**
@@ -99,8 +120,8 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         Bundle bundle = new Bundle();
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-        mPeriodic = false;
-         /*
+        bundle.putBoolean(MANUAL_SYNC, true);
+        /*
          * Request the sync for the default account, authority, and
          * manual sync settings
          */
@@ -183,8 +204,9 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     /**
      * Helper method to store list of movies in database
      * @param movieList the list of movies
+     * @param sortOrder the sort order that movie belongs to
      */
-    private void addMovies(final List<Movie> movieList) {
+    private void addMovies(final List<Movie> movieList, String sortOrder) {
         // Insert the new movies data into the database
         Vector<ContentValues> cVVector = new Vector<ContentValues>(movieList.size());
         for (Movie movie : movieList) {
@@ -200,6 +222,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
             cv.put(MovieEntry.COLUMN_BACKDROP_PATH, movie.getBackdropPath());
             cv.put(MovieEntry.COLUMN_RELEASE_DATE,
                     Utility.formatDate(movie.getReleaseDate(), "yyyy-MM-dd"));
+            cv.put(MovieEntry.COLUMN_SORT_ORDER, sortOrder);
             cVVector.add(cv);
         }
 
@@ -209,13 +232,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
             cVVector.toArray(cvArray);
             getContext().getContentResolver().bulkInsert(MovieEntry.CONTENT_URI, cvArray);
         }
-        Log.d(LOG_TAG, "Sync Complete. " + cVVector.size() + " inserted.");
-        setConnectionStatus(getContext(), CONNECTION_OK);
-        if (mPeriodic) {
-            // Periodic sync running. Request fetch when user change preferences
-            Log.d(LOG_TAG, "Set fully fetched to false");
-            Utility.setFullyFetched(getContext(), false);
-        }
+        Log.d(LOG_TAG, "Movies synchronized. " + cVVector.size() + " inserted.");
         // Sync trailers and reviews
         // Due to API restrictions (40 requests at the time)
         // no way to perform this in parallel

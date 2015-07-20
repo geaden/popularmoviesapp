@@ -2,13 +2,13 @@ package com.geaden.android.movies.app;
 
 import android.app.SearchManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.net.Uri;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
-import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -22,11 +22,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import com.geaden.android.movies.app.adapters.MoviesAdapter;
 import com.geaden.android.movies.app.data.MovieContract;
+import com.geaden.android.movies.app.data.MovieDbHelper;
 import com.geaden.android.movies.app.sync.MovieSyncAdapter;
 
 
@@ -62,7 +62,8 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             MovieContract.MovieEntry.COLUMN_BACKDROP_PATH,
             MovieContract.MovieEntry.COLUMN_RELEASE_DATE,
             MovieContract.FavoriteEntry.TABLE_NAME + "." +
-                    MovieContract.FavoriteEntry.COLUMN_FAVORED_AT
+                    MovieContract.FavoriteEntry.COLUMN_FAVORED_AT,
+            MovieContract.MovieEntry.COLUMN_SORT_ORDER
     };
 
     /** Corresponding column indices **/
@@ -77,6 +78,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     public final static int BACKDROP_PATH = 8;
     public final static int RELEASE_DATE = 9;
     public final static int FAVORED_AT = 10;
+    public final static int SORT_ORDER = 11;
 
 
     @Override
@@ -108,7 +110,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
 
             @Override
             public boolean onQueryTextSubmit(String query) {
-                onMoveQueryChanged(query);
+                // Don't care about this.
                 return true;
             }
         });
@@ -125,16 +127,16 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
         mMoviesGrid.setAdapter(mMoviesAdapter);
         mMoviesGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Cursor cursor = mMoviesAdapter.getCursor();
-                if (cursor != null && cursor.moveToPosition(position)) {
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
+                Log.d(LOG_TAG, "OnItemClickListener " + cursor);
+                if (cursor != null) {
                     long movieId = cursor.getLong(MOVIE_ID);
                     Uri movieUri = MovieContract.MovieEntry.buildMovieUri(movieId);
                     Log.d(LOG_TAG, "Selected movie url " + movieUri);
                     ((Callback) getActivity()).onItemSelected(movieUri);
-                    mMoviesGrid.setItemChecked(position, true);
                 }
-                setActivatedPosition(mPosition);
+                mPosition = position;
             }
         });
         // If there's instance state, mine it for useful information.
@@ -142,6 +144,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
         // does crazy lifecycle related things.  It should feel like some stuff stretched out,
         // or magically appeared to take advantage of room, but data or place in the app was never
         // actually *lost*.
+        Log.d(LOG_TAG, "Saved instance " + savedInstanceState);
         if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)) {
             // The gridview probably hasn't even been populated yet.  Actually perform the
             // swapout in onLoadFinished.
@@ -189,33 +192,28 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        String selection = null;
+        // Initial selection and selection arguments
+        String selection;
         String[] selectionArgs = null;
-        // Get the column name to order the result
-        String orderCol;
-        // Get the sort order
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String sortOrder = sp.getString(getString(R.string.pref_sort_key),
-                getString(R.string.pref_default_sort_order_value));
-        if (sortOrder.equals(getString(R.string.pref_sort_popularity))) {
-            orderCol = MovieContract.MovieEntry.COLUMN_POPULARITY + " DESC LIMIT 20";
-        } else if (sortOrder.equals(getString(R.string.pref_sort_rating))) {
-            orderCol = MovieContract.MovieEntry.COLUMN_VOTE_AVG + " DESC LIMIT 20";
-        } else if (sortOrder.equals(getString(R.string.pref_sort_favourite))) {
+        // Order by column
+        String orderBy = MovieContract.MovieEntry.COLUMN_POPULARITY;
+        // Get preferred sort order
+        String sortOrder = Utility.getPreferredSortOrder(getActivity());
+        if (sortOrder.equals(getString(R.string.pref_sort_favourite))) {
             selection = MovieContract.FavoriteEntry.TABLE_NAME + "." +
                     MovieContract.FavoriteEntry.COLUMN_FAVORED_AT + " IS NOT NULL";
-            selectionArgs = null;
-            orderCol = MovieContract.MovieEntry.COLUMN_POPULARITY + " DESC";
         } else {
-            orderCol = MovieContract.MovieEntry.COLUMN_POPULARITY + " DESC LIMIT 20";
+            if (sortOrder.equals(getString(R.string.pref_sort_popularity))) {
+                orderBy = MovieContract.MovieEntry.COLUMN_POPULARITY;
+            } else {
+                orderBy = MovieContract.MovieEntry.COLUMN_VOTE_AVG;
+            }
+            selection = MovieContract.MovieEntry.COLUMN_SORT_ORDER + " = ?";
+            selectionArgs = new String[]{sortOrder};
         }
         // Keep movie query if there is already selections
         if (null != mMovieQuery && !mMovieQuery.isEmpty()) {
-            if (selection != null) {
-                selection += " AND " + MovieContract.MovieEntry.COLUMN_TITLE + " LIKE LOWER(?)";
-            } else {
-                selection = MovieContract.MovieEntry.COLUMN_TITLE + " LIKE LOWER(?)";
-            }
+            selection += " AND " + MovieContract.MovieEntry.COLUMN_TITLE + " LIKE LOWER(?)";
             if (selectionArgs != null) {
                 String[] newSelectionArgs = new String[selectionArgs.length + 1];
                 for (int i = 0; i < selectionArgs.length; i++) {
@@ -232,7 +230,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
                 MOVIE_PROJECTION,
                 selection,
                 selectionArgs,
-                orderCol);
+                orderBy + " DESC");
     }
 
     @Override
@@ -241,7 +239,12 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             updateEmptyView();
         } else if (key.equals(getString(R.string.pref_sort_key))) {
             // Reload the data
-            Log.d(LOG_TAG, "Sort order changed. Reload data");
+            Log.d(LOG_TAG, "Sort order changed. Reloading movies.");
+            // Get sync sort order
+            String sortOrder = sharedPreferences.getString(key, getString(R.string.pref_default_sort_order_value));
+            if (!sortOrder.equals(getString(R.string.pref_sort_favourite))) {
+                MovieSyncAdapter.syncImmediately(getActivity());
+            }
             getActivity().getSupportLoaderManager().restartLoader(MOVIES_LOADER, null, this);
         }
     }
@@ -271,12 +274,13 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
                         message = R.string.empty_movie_list_connection_unknown;
                         break;
                     case MovieSyncAdapter.CONNECTION_OK:
+                        if (null != mMovieQuery && !mMovieQuery.isEmpty()) {
+                            message = R.string.empty_movie_list_not_found;
+                        }
                         break;
                     default:
                         if (!Utility.isNetworkAvailable(getActivity())) {
                             message = R.string.empty_movie_list_no_network;
-                        } else if (null != mMovieQuery && !mMovieQuery.isEmpty()) {
-                            message = R.string.empty_movie_list_not_found;
                         }
                 }
                 tv.setText(message);
@@ -299,28 +303,12 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         Log.d(LOG_TAG, "Data " + data.getCount());
         mMoviesAdapter.swapCursor(data);
-        if (mPosition != GridView.INVALID_POSITION) {
-            // If we don't need to restart the loader, and there's a desired position to restore
-            // to, do so now.
-            mMoviesGrid.smoothScrollToPosition(mPosition);
-        }
-        if (mMoviesAdapter.getCount() > 0) {
-            setActivatedPosition(0);
-        }
+//        if (data.getCount() > 0) {
+//            mPosition = mPosition != GridView.INVALID_POSITION ? mPosition : 0;
+//            Log.d(LOG_TAG, "Scrolling to position " + mPosition);
+//            mMoviesGrid.smoothScrollToPosition(mPosition);
+//        }
         updateEmptyView();
-    }
-
-    /**
-     * Activates current position
-     * @param position the position to be activated.
-     */
-    private void setActivatedPosition(int position) {
-        if (position == GridView.INVALID_POSITION) {
-            mMoviesGrid.setItemChecked(mPosition, false);
-        } else {
-            mMoviesGrid.setItemChecked(position, true);
-        }
-        mPosition = position;
     }
 
     @Override

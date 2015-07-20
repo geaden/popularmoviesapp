@@ -45,7 +45,6 @@ import com.squareup.picasso.Picasso;
  */
 public class MovieDetailFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
     public static final String MOVIE_DETAIL_URI = "movie_detail_uri";
-    public static String MOVIE_DETAIL_ID = "movie_detail_id";
 
     public final String MOVIE_SHARE_HASHTAG = "#TMDB";
 
@@ -105,7 +104,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         setHasOptionsMenu(true);
     }
 
-    public static Fragment getInstance(Bundle arguments) {
+    public static Fragment newInstance(Bundle arguments) {
         Fragment fragment = new MovieDetailFragment();
         fragment.setArguments(arguments);
         return fragment;
@@ -145,8 +144,6 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        // Inflate the menu; this adds items to the action bar if it is present.
-        // inflater.inflate(R.menu.menu_movie_detail, menu);
     }
 
     @Override
@@ -159,9 +156,12 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         super.onResume();
         Bundle arguments = getArguments();
         if (arguments != null && arguments.containsKey(MOVIE_DETAIL_URI)) {
+            mUri = arguments.getParcelable(MOVIE_DETAIL_URI);
+            Log.d(LOG_TAG, "Restarting loaders " + mUri);
             getLoaderManager().restartLoader(MOVIE_DETAIL_LOADER, null, this);
             getLoaderManager().restartLoader(MOVIE_TRAILERS_LOADER, null, this);
             getLoaderManager().restartLoader(MOVIE_REVIEWS_LOADER, null, this);
+
         }
     }
 
@@ -174,6 +174,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
             mUri = arguments.getParcelable(MOVIE_DETAIL_URI);
             Log.d(LOG_TAG, "mUri " + mUri);
             mMovieId = ContentUris.parseId(mUri);
+            Log.d(LOG_TAG, "mMovieId " + mMovieId);
         }
         mMovieTitle = (TextView) rootView.findViewById(R.id.movie_detail_title);
         mMovieOverview = (TextView) rootView.findViewById(R.id.movie_detail_overview);
@@ -232,45 +233,57 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        getActivity().getSupportLoaderManager().initLoader(MOVIE_DETAIL_LOADER, null, this);
-        getActivity().getSupportLoaderManager().initLoader(MOVIE_TRAILERS_LOADER, null, this);
-        getActivity().getSupportLoaderManager().initLoader(MOVIE_REVIEWS_LOADER, null, this);
+        LoaderManager.enableDebugLogging(true);
+        if (savedInstanceState != null) {
+            mUri = savedInstanceState.getParcelable(MOVIE_DETAIL_URI);
+        }
+        Bundle arguments = getArguments();
+        if (arguments != null && arguments.containsKey(MOVIE_DETAIL_URI)) {
+            Log.d(LOG_TAG, "Initializing loaders.");
+            // TODO: Due to the described issue http://stackoverflow.com/questions/10321712/loader-doesnt-start-after-calling-initloader
+            // got to force load on init loader
+            getActivity().getSupportLoaderManager().restartLoader(MOVIE_DETAIL_LOADER, null, this);
+            getActivity().getSupportLoaderManager().restartLoader(MOVIE_TRAILERS_LOADER, null, this);
+            getActivity().getSupportLoaderManager().restartLoader(MOVIE_REVIEWS_LOADER, null, this);
+        }
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        Log.d(LOG_TAG, "Movie id " + mMovieId);
-        switch (id) {
-            case MOVIE_DETAIL_LOADER:
-                return new CursorLoader(
-                        getActivity(),
-                        mUri,
-                        MovieGridFragment.MOVIE_PROJECTION,
-                        null,
-                        null,
-                        null);
-            case MOVIE_TRAILERS_LOADER:
-                Log.d(LOG_TAG, "Creating trailers loader");
-                return new CursorLoader(
-                        getActivity(),
-                        MovieContract.TrailerEntry.CONTENT_URI,
-                        TRAILER_PROJECTION,
-                        MovieContract.TrailerEntry.COLUMN_MOVIE_ID + " = ?",
-                        new String[]{Long.toString(mMovieId)},
-                        null);
-            case MOVIE_REVIEWS_LOADER:
-                Log.d(LOG_TAG, "Creating reviews loader");
-                return new CursorLoader(
-                        getActivity(),
-                        MovieContract.ReviewEntry.CONTENT_URI,
-                        REVIEW_PROJECTION,
-                        MovieContract.ReviewEntry.COLUMN_MOVIE_ID + " = ?",
-                        new String[]{Long.toString(mMovieId)},
-                        null);
-            default:
-                throw new UnsupportedOperationException("Unknown loader: " + id);
+        if (mUri != null) {
+            switch (id) {
+                case MOVIE_DETAIL_LOADER:
+                    Log.d(LOG_TAG, "MOVIE_DETAIL_LOADER::Movie id " + mMovieId);
+                    return new CursorLoader(
+                            getActivity(),
+                            mUri,
+                            MovieGridFragment.MOVIE_PROJECTION,
+                            null,
+                            null,
+                            null);
+                case MOVIE_TRAILERS_LOADER:
+                    Log.d(LOG_TAG, "MOVIE_TRAILERS_LOADER::Movie id " + mMovieId);
+                    return new CursorLoader(
+                            getActivity(),
+                            MovieContract.TrailerEntry.CONTENT_URI,
+                            TRAILER_PROJECTION,
+                            MovieContract.TrailerEntry.COLUMN_MOVIE_ID + " = ?",
+                            new String[]{Long.toString(mMovieId)},
+                            null);
+                case MOVIE_REVIEWS_LOADER:
+                    Log.d(LOG_TAG, "MOVIE_REVIEWS_LOADER::Movie id " + mMovieId);
+                    return new CursorLoader(
+                            getActivity(),
+                            MovieContract.ReviewEntry.CONTENT_URI,
+                            REVIEW_PROJECTION,
+                            MovieContract.ReviewEntry.COLUMN_MOVIE_ID + " = ?",
+                            new String[]{Long.toString(mMovieId)},
+                            null);
+                default:
+                    throw new UnsupportedOperationException("Unknown loader: " + id);
+            }
         }
-
+        return null;
     }
 
     @Override
@@ -278,6 +291,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         if (!data.moveToFirst()) return;
         switch (loader.getId()) {
             case MOVIE_DETAIL_LOADER:
+                Log.d(LOG_TAG, "onLoadFinished::data " + data);
                 String title = data.getString(MovieGridFragment.TITLE);
                 float voteAvg = data.getFloat(MovieGridFragment.VOTE_AVG);
                 String overview = data.getString(MovieGridFragment.OVERVIEW);
@@ -378,6 +392,5 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         } else if (loader.getId() == MOVIE_REVIEWS_LOADER) {
             mReviewsAdapter.swapCursor(null);
         }
-
     }
 }
