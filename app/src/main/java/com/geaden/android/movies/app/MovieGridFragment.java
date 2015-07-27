@@ -4,7 +4,6 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -26,7 +25,6 @@ import android.widget.TextView;
 
 import com.geaden.android.movies.app.adapters.MoviesAdapter;
 import com.geaden.android.movies.app.data.MovieContract;
-import com.geaden.android.movies.app.data.MovieDbHelper;
 import com.geaden.android.movies.app.sync.MovieSyncAdapter;
 
 
@@ -103,7 +101,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
 
             @Override
             public boolean onQueryTextChange(String query) {
-                onMoveQueryChanged(query);
+                onMovieSearchQueryChanged(query);
                 return true;
 
             }
@@ -164,9 +162,9 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
      * Performs query for list of movides
      * @param query the query
      */
-    private void onMoveQueryChanged(String query) {
+    private void onMovieSearchQueryChanged(String query) {
         mMovieQuery = query;
-        getActivity().getSupportLoaderManager().restartLoader(MOVIES_LOADER, null, this);
+        getLoaderManager().restartLoader(MOVIES_LOADER, null, this);
     }
 
     @Override
@@ -242,10 +240,11 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             Log.d(LOG_TAG, "Sort order changed. Reloading movies.");
             // Get sync sort order
             String sortOrder = sharedPreferences.getString(key, getString(R.string.pref_default_sort_order_value));
+            Log.d(LOG_TAG, "Selected sort order " + sortOrder);
             if (!sortOrder.equals(getString(R.string.pref_sort_favourite))) {
                 MovieSyncAdapter.syncImmediately(getActivity());
             }
-            getActivity().getSupportLoaderManager().restartLoader(MOVIES_LOADER, null, this);
+            getLoaderManager().restartLoader(MOVIES_LOADER, null, this);
         }
     }
 
@@ -303,11 +302,9 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         Log.d(LOG_TAG, "Data " + data.getCount());
         mMoviesAdapter.swapCursor(data);
-//        if (data.getCount() > 0) {
-//            mPosition = mPosition != GridView.INVALID_POSITION ? mPosition : 0;
-//            Log.d(LOG_TAG, "Scrolling to position " + mPosition);
-//            mMoviesGrid.smoothScrollToPosition(mPosition);
-//        }
+        if (data.getCount() > 0 && mPosition != GridView.INVALID_POSITION) {
+            mMoviesGrid.smoothScrollToPosition(mPosition);
+        }
         updateEmptyView();
     }
 

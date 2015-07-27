@@ -73,30 +73,32 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
             // Sync for current preferred sorting order
             // Only if manual sync is not requested and
             // for the requested order no movies at all
-            long movies = DatabaseUtils.longForQuery(
+            long count = DatabaseUtils.longForQuery(
                     MovieDbHelper.getInstance(getContext()).getReadableDatabase(),
                     "SELECT COUNT(*) FROM " + MovieEntry.TABLE_NAME +
                             " WHERE " + MovieEntry.COLUMN_SORT_ORDER + " = ?",
                     new String[]{ sortOrder });
+            Log.d(LOG_TAG, "Sync count " + count + " for sort order " + sortOrder);
             if (null != extras
                     && extras.containsKey(MANUAL_SYNC)
                     && extras.getBoolean(MANUAL_SYNC)
-                    && movies > 0) {
+                    && count > 0) {
                 // Do not sync with TMDB, just show what already present in database
+                Log.d(LOG_TAG, "Skipping movie sync for " + sortOrder);
                 return;
-            } else {
-                setConnectionStatus(getContext(), CONNECTION_SYNC);
-                // Clean up outdated items
-                MovieDbHelper.getInstance(getContext()).getWritableDatabase().execSQL("DELETE FROM "
-                        + MovieEntry.TABLE_NAME + " WHERE "
-                        + MovieEntry.COLUMN_SORT_ORDER + " != ?  AND "
-                        + MovieEntry.COLUMN_MOVIE_ID +
-                        " NOT IN (SELECT " + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID +
-                        " FROM " + MovieContract.FavoriteEntry.TABLE_NAME + ")");
-                syncMovies(sortOrder);
-                setConnectionStatus(getContext(), CONNECTION_OK);
-                Log.d(LOG_TAG, "Sync completed.");
             }
+            setConnectionStatus(getContext(), CONNECTION_SYNC);
+            // Clean up outdated items for the next sort order
+            MovieDbHelper.getInstance(getContext()).getWritableDatabase().execSQL("DELETE FROM "
+                    + MovieEntry.TABLE_NAME + " WHERE "
+                    + MovieEntry.COLUMN_SORT_ORDER + " != ?  AND "
+                    + MovieEntry.COLUMN_MOVIE_ID +
+                    " NOT IN (SELECT " + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID +
+                    " FROM " + MovieContract.FavoriteEntry.TABLE_NAME + ")",
+                    new String[]{ sortOrder });
+            syncMovies(sortOrder);
+            setConnectionStatus(getContext(), CONNECTION_OK);
+            Log.d(LOG_TAG, "Sync completed.");
         } catch (Throwable e) {
             Log.e(LOG_TAG, "Unknown server error", e);
             setConnectionStatus(getContext(), CONNECTION_UNKNOWN);
@@ -125,6 +127,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
          * Request the sync for the default account, authority, and
          * manual sync settings
          */
+        Log.d(LOG_TAG, "Manual sync with TMDB");
         ContentResolver.requestSync(getSyncAccount(context),
                 context.getResources().getString(R.string.content_authority),
                 bundle);

@@ -154,15 +154,6 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     @Override
     public void onResume() {
         super.onResume();
-        Bundle arguments = getArguments();
-        if (arguments != null && arguments.containsKey(MOVIE_DETAIL_URI)) {
-            mUri = arguments.getParcelable(MOVIE_DETAIL_URI);
-            Log.d(LOG_TAG, "Restarting loaders " + mUri);
-            getLoaderManager().restartLoader(MOVIE_DETAIL_LOADER, null, this);
-            getLoaderManager().restartLoader(MOVIE_TRAILERS_LOADER, null, this);
-            getLoaderManager().restartLoader(MOVIE_REVIEWS_LOADER, null, this);
-
-        }
     }
 
     @Nullable
@@ -237,23 +228,18 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         if (savedInstanceState != null) {
             mUri = savedInstanceState.getParcelable(MOVIE_DETAIL_URI);
         }
-        Bundle arguments = getArguments();
-        if (arguments != null && arguments.containsKey(MOVIE_DETAIL_URI)) {
-            Log.d(LOG_TAG, "Initializing loaders.");
-            // TODO: Due to the described issue http://stackoverflow.com/questions/10321712/loader-doesnt-start-after-calling-initloader
-            // got to force load on init loader
-            getActivity().getSupportLoaderManager().restartLoader(MOVIE_DETAIL_LOADER, null, this);
-            getActivity().getSupportLoaderManager().restartLoader(MOVIE_TRAILERS_LOADER, null, this);
-            getActivity().getSupportLoaderManager().restartLoader(MOVIE_REVIEWS_LOADER, null, this);
+        if (mUri != null) {
+            getLoaderManager().initLoader(MOVIE_DETAIL_LOADER, null, this);
+            getLoaderManager().initLoader(MOVIE_TRAILERS_LOADER, null, this);
+            getLoaderManager().initLoader(MOVIE_REVIEWS_LOADER, null, this);
         }
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        if (mUri != null) {
+        if (null != mUri) {
             switch (id) {
                 case MOVIE_DETAIL_LOADER:
-                    Log.d(LOG_TAG, "MOVIE_DETAIL_LOADER::Movie id " + mMovieId);
                     return new CursorLoader(
                             getActivity(),
                             mUri,
@@ -262,7 +248,6 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                             null,
                             null);
                 case MOVIE_TRAILERS_LOADER:
-                    Log.d(LOG_TAG, "MOVIE_TRAILERS_LOADER::Movie id " + mMovieId);
                     return new CursorLoader(
                             getActivity(),
                             MovieContract.TrailerEntry.CONTENT_URI,
@@ -271,7 +256,6 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                             new String[]{Long.toString(mMovieId)},
                             null);
                 case MOVIE_REVIEWS_LOADER:
-                    Log.d(LOG_TAG, "MOVIE_REVIEWS_LOADER::Movie id " + mMovieId);
                     return new CursorLoader(
                             getActivity(),
                             MovieContract.ReviewEntry.CONTENT_URI,
@@ -288,46 +272,46 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, final Cursor data) {
-        if (!data.moveToFirst()) return;
         switch (loader.getId()) {
             case MOVIE_DETAIL_LOADER:
-                Log.d(LOG_TAG, "onLoadFinished::data " + data);
-                String title = data.getString(MovieGridFragment.TITLE);
-                float voteAvg = data.getFloat(MovieGridFragment.VOTE_AVG);
-                String overview = data.getString(MovieGridFragment.OVERVIEW);
-                String posterPath = data.getString(MovieGridFragment.POSTER_PATH);
-                String releaseDate = data.getString(MovieGridFragment.RELEASE_DATE);
-                mMovieTitle.setText(title);
-                mMovieOverview.setText(overview);
-                Picasso.with(getActivity()).load(posterPath).into(mMoviePoster);
-                mMoviePoster.setContentDescription(title);
-                mMovieRating.setRating(Utility.getRating(getActivity(), voteAvg));
-                mMovieRatingNumber.setText(getString(R.string.movie_rating_number, voteAvg));
-                mMovieReleaseDate.setText(Utility.getReleaseYear(releaseDate));
+                if (null != data && data.moveToFirst()) {
+                    String title = data.getString(MovieGridFragment.TITLE);
+                    float voteAvg = data.getFloat(MovieGridFragment.VOTE_AVG);
+                    String overview = data.getString(MovieGridFragment.OVERVIEW);
+                    String posterPath = data.getString(MovieGridFragment.POSTER_PATH);
+                    String releaseDate = data.getString(MovieGridFragment.RELEASE_DATE);
+                    mMovieTitle.setText(title);
+                    mMovieOverview.setText(overview);
+                    Picasso.with(getActivity()).load(posterPath).into(mMoviePoster);
+                    mMoviePoster.setContentDescription(title);
+                    mMovieRating.setRating(Utility.getRating(getActivity(), voteAvg));
+                    mMovieRatingNumber.setText(getString(R.string.movie_rating_number, voteAvg));
+                    mMovieReleaseDate.setText(Utility.getReleaseYear(releaseDate));
 
-                // If onCreateOptionsMenu has already happened, we need to update the share intent now.
-                if (mShareActionProvider != null) {
-                    mShareActionProvider.setShareIntent(createShareMovieIntent(mMovieId));
-                }
-
-                AppCompatActivity activity = (AppCompatActivity) getActivity();
-                Toolbar toolbarView = (Toolbar) getView().findViewById(R.id.detail_toolbar);
-
-                if ( null != toolbarView ) {
-                    if (activity instanceof MovieDetailActivity) {
-                        activity.setSupportActionBar(toolbarView);
-                        activity.getSupportActionBar().setDisplayShowTitleEnabled(false);
-                        activity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                    // If onCreateOptionsMenu has already happened, we need to update the share intent now.
+                    if (mShareActionProvider != null) {
+                        mShareActionProvider.setShareIntent(createShareMovieIntent(mMovieId));
                     }
-                    Menu menu = toolbarView.getMenu();
-                    if ( null != menu ) menu.clear();
-                    // Locate MenuItem with ShareActionProvider
-                    toolbarView.inflateMenu(R.menu.menu_movie_detail);
-                    mFavourite = data.getLong(MovieGridFragment.FAVORED_AT) > 0;
-                    ToggleButton favouriteToggle = (ToggleButton) toolbarView.findViewById(R.id.favourite_toggle_btn);
-                    favouriteToggle.setChecked(mFavourite);
-                    favouriteToggle.setOnCheckedChangeListener(new FavoriteCheckedListener());
-                    finishCreatingMenu(menu, data);
+
+                    AppCompatActivity activity = (AppCompatActivity) getActivity();
+                    Toolbar toolbarView = (Toolbar) getView().findViewById(R.id.detail_toolbar);
+
+                    if ( null != toolbarView ) {
+                        if (activity instanceof MovieDetailActivity) {
+                            activity.setSupportActionBar(toolbarView);
+                            activity.getSupportActionBar().setDisplayShowTitleEnabled(false);
+                            activity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                        }
+                        Menu menu = toolbarView.getMenu();
+                        if ( null != menu ) menu.clear();
+                        // Locate MenuItem with ShareActionProvider
+                        toolbarView.inflateMenu(R.menu.menu_movie_detail);
+                        mFavourite = data.getLong(MovieGridFragment.FAVORED_AT) > 0;
+                        ToggleButton favouriteToggle = (ToggleButton) toolbarView.findViewById(R.id.favourite_toggle_btn);
+                        favouriteToggle.setChecked(mFavourite);
+                        favouriteToggle.setOnCheckedChangeListener(new FavoriteCheckedListener());
+                        finishCreatingMenu(menu, data);
+                    }
                 }
                 break;
             case MOVIE_TRAILERS_LOADER:

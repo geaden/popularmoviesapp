@@ -42,7 +42,6 @@ public class MainActivity extends AppCompatActivity implements MovieGridFragment
             // fragment transaction
             if (savedInstanceState != null) {
                 getSupportFragmentManager().beginTransaction()
-                        .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
                         .replace(R.id.movie_detail_container, new MovieDetailFragment(), MOVIEDETAILFRAGMENT_TAG)
                         .commit();
             }
