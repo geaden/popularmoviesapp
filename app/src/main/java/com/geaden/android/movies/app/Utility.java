@@ -26,6 +26,7 @@ public class Utility {
 
     /**
      * Gets preferred sort order from user settings
+     *
      * @param c the context to get SharedPreferences from
      * @return the preferred sort order
      */
@@ -37,7 +38,8 @@ public class Utility {
 
     /**
      * Formats a data according to format
-     * @param date the date to format. If null, then null is returned.
+     *
+     * @param date   the date to format. If null, then null is returned.
      * @param format the provided format
      * @return string representation of date according to the provided format
      */
@@ -51,11 +53,14 @@ public class Utility {
 
     /**
      * Gets the connection status
+     *
      * @param context the Context to get Preferences from
      * @return the connection status
      */
     @SuppressWarnings("ResourceType")
-    static public @MovieSyncAdapter.ConnectionStatus int getConnectionStatus(Context context) {
+    static public
+    @MovieSyncAdapter.ConnectionStatus
+    int getConnectionStatus(Context context) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         return sp.getInt(context.getString(R.string.pref_conn_status_key),
                 MovieSyncAdapter.CONNECTION_UNKNOWN);
@@ -76,7 +81,8 @@ public class Utility {
 
     /**
      * Gets movie rating according to max allowed stars
-     * @param c the Context to get max stars from
+     *
+     * @param c       the Context to get max stars from
      * @param voteAvg average vote
      * @return normalized rating
      */
@@ -88,6 +94,7 @@ public class Utility {
 
     /**
      * Gets movie release date from provided date string
+     *
      * @param dateStr the date string
      * @return year as string
      */
@@ -100,6 +107,7 @@ public class Utility {
 
     /**
      * Constructs trailer url by adding key to base trailer url
+     *
      * @param key the key of trailer
      * @return trailer URL
      */
@@ -146,7 +154,8 @@ public class Utility {
 
     /**
      * Sets movie sorting order
-     * @param ctx the Context to get SharedPreferences
+     *
+     * @param ctx            the Context to get SharedPreferences
      * @param sortOrderValue sorting order to be set
      */
     public static void setSortOrder(Context ctx, String sortOrderValue) {

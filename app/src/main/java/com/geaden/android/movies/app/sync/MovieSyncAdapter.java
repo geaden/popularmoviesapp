@@ -59,7 +59,8 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
             CONNECTION_SERVER_INVALID,
             CONNECTION_UNKNOWN,
             CONNECTION_SYNC})
-    public @interface ConnectionStatus {}
+    public @interface ConnectionStatus {
+    }
 
     public MovieSyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
@@ -71,31 +72,37 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         String sortOrder = Utility.getPreferredSortOrder(getContext());
         try {
             // Sync for current preferred sorting order
-            // Only if manual sync is not requested and
-            // for the requested order no movies at all
-            long count = DatabaseUtils.longForQuery(
-                    MovieDbHelper.getInstance(getContext()).getReadableDatabase(),
-                    "SELECT COUNT(*) FROM " + MovieEntry.TABLE_NAME +
-                            " WHERE " + MovieEntry.COLUMN_SORT_ORDER + " = ?",
-                    new String[]{ sortOrder });
-            Log.d(LOG_TAG, "Sync count " + count + " for sort order " + sortOrder);
-            if (null != extras
+            boolean manualSync = null != extras
                     && extras.containsKey(MANUAL_SYNC)
-                    && extras.getBoolean(MANUAL_SYNC)
-                    && count > 0) {
-                // Do not sync with TMDB, just show what already present in database
-                Log.d(LOG_TAG, "Skipping movie sync for " + sortOrder);
-                return;
+                    && extras.getBoolean(MANUAL_SYNC);
+            if (manualSync) {
+                Log.d(LOG_TAG, "Manual sync with TMDB");
+                // Get number of stored locally movies for the preferred sort order
+                long count = DatabaseUtils.longForQuery(
+                        MovieDbHelper.getInstance(getContext()).getReadableDatabase(),
+                        "SELECT COUNT(*) FROM " + MovieEntry.TABLE_NAME +
+                                " WHERE " + MovieEntry.COLUMN_SORT_ORDER + " = ?" +
+                                " AND " + MovieEntry.COLUMN_MOVIE_ID + " NOT IN (SELECT " +
+                                MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + " FROM " +
+                                MovieContract.FavoriteEntry.TABLE_NAME + ")",
+                        new String[]{sortOrder});
+                Log.d(LOG_TAG, "Sync count " + count + " for sort order " + sortOrder);
+                if (count > 0) {
+                    // Do not sync with TMDB, just show what already have
+                    Log.d(LOG_TAG, "Skipping movie sync for " + sortOrder);
+                    return;
+                }
+            }
+            if (!manualSync) {
+                // Clean up movies that are not in favorites
+                // to prevent endless history
+                MovieDbHelper.getInstance(getContext()).getWritableDatabase().execSQL("DELETE FROM "
+                        + MovieEntry.TABLE_NAME + " WHERE "
+                        + MovieEntry.COLUMN_MOVIE_ID +
+                        " NOT IN (SELECT " + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID +
+                        " FROM " + MovieContract.FavoriteEntry.TABLE_NAME + ")");
             }
             setConnectionStatus(getContext(), CONNECTION_SYNC);
-            // Clean up outdated items for the next sort order
-            MovieDbHelper.getInstance(getContext()).getWritableDatabase().execSQL("DELETE FROM "
-                    + MovieEntry.TABLE_NAME + " WHERE "
-                    + MovieEntry.COLUMN_SORT_ORDER + " != ?  AND "
-                    + MovieEntry.COLUMN_MOVIE_ID +
-                    " NOT IN (SELECT " + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID +
-                    " FROM " + MovieContract.FavoriteEntry.TABLE_NAME + ")",
-                    new String[]{ sortOrder });
             syncMovies(sortOrder);
             setConnectionStatus(getContext(), CONNECTION_OK);
             Log.d(LOG_TAG, "Sync completed.");
@@ -107,15 +114,21 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
     /**
      * Performs movies synchronization
+     *
      * @param sortOrder the sort order to perform sync for
      */
     private void syncMovies(String sortOrder) throws Throwable {
+        if (sortOrder.equals(getContext().getString(R.string.pref_sort_favourite))) {
+            // If current sort order is "favorites" then sync for default sort order
+            sortOrder = getContext().getString(R.string.pref_default_sort_order_value);
+        }
         List<Movie> movieList = RestClient.getsInstance().queryMovies(sortOrder);
         addMovies(movieList, sortOrder);
     }
 
     /**
      * Helper method to have the sync adapter sync immediately
+     *
      * @param context An app context
      */
     public static void syncImmediately(Context context) {
@@ -125,9 +138,8 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         bundle.putBoolean(MANUAL_SYNC, true);
         /*
          * Request the sync for the default account, authority, and
-         * manual sync settings
+         * sync settings
          */
-        Log.d(LOG_TAG, "Manual sync with TMDB");
         ContentResolver.requestSync(getSyncAccount(context),
                 context.getResources().getString(R.string.content_authority),
                 bundle);
@@ -206,6 +218,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
     /**
      * Helper method to store list of movies in database
+     *
      * @param movieList the list of movies
      * @param sortOrder the sort order that movie belongs to
      */
@@ -230,7 +243,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         }
 
         // add to database
-        if ( cVVector.size() > 0 ) {
+        if (cVVector.size() > 0) {
             ContentValues[] cvArray = new ContentValues[cVVector.size()];
             cVVector.toArray(cvArray);
             getContext().getContentResolver().bulkInsert(MovieEntry.CONTENT_URI, cvArray);
@@ -245,13 +258,14 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
     /**
      * Retrieves trailers and store in internal database
+     *
      * @param movieList the list of available movies
      */
     private void addTrailers(List<Movie> movieList) {
         for (Movie movie : movieList) {
             try {
                 List<Trailer> trailers = RestClient.getsInstance().queryTrailers(movie.getId());
-                Vector<ContentValues> cVVector = new Vector<ContentValues>();
+                Vector<ContentValues> cVVector = new Vector<ContentValues>(1);
                 for (Trailer trailer : trailers) {
                     ContentValues cv = new ContentValues();
                     cv.put(TrailerEntry.COLUMN_MOVIE_ID, movie.getId());
@@ -281,13 +295,14 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
     /**
      * Retrieves trailers and store in internal database
+     *
      * @param movieList the list of available movies
      */
     private void addReviews(List<Movie> movieList) {
         for (Movie movie : movieList) {
             try {
                 List<Review> reviews = RestClient.getsInstance().queryReviews(movie.getId());
-                Vector<ContentValues> cVVector = new Vector<ContentValues>();
+                Vector<ContentValues> cVVector = new Vector<ContentValues>(1);
                 for (Review review : reviews) {
                     ContentValues cv = new ContentValues();
                     cv.put(ReviewEntry.COLUMN_MOVIE_ID, movie.getId());
@@ -315,10 +330,11 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     /**
      * Sets the connection status into shared preference.  This function should not be called from
      * the UI thread because it uses commit to write to the shared preferences.
-     * @param c Context to get the PreferenceManager from.
+     *
+     * @param c          Context to get the PreferenceManager from.
      * @param connStatus The IntDef value to set
      */
-    static private void setConnectionStatus(Context c, @ConnectionStatus int connStatus){
+    static private void setConnectionStatus(Context c, @ConnectionStatus int connStatus) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(c);
         SharedPreferences.Editor spe = sp.edit();
         spe.putInt(c.getString(R.string.pref_conn_status_key), connStatus);

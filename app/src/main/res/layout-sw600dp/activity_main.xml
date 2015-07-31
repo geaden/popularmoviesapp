@@ -2,6 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     tools:context=".MainActivity">
 
@@ -16,11 +17,12 @@
         android:orientation="horizontal">
         <fragment
             android:id="@+id/movie_grid_fragment"
-            android:name="com.geaden.android.movies.app.MovieGridFragment"
-            tools:layout="@layout/fragment_movies"
             android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:name="com.geaden.android.movies.app.MovieGridFragment"
             android:layout_weight="1"
-            android:layout_height="match_parent" />
+            app:autoSelectMovie="true"
+            tools:layout="@layout/fragment_movies" />
         <!-- Movie detail container -->
         <FrameLayout
             android:id="@+id/movie_detail_container"

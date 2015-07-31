@@ -1,8 +1,11 @@
 package com.geaden.android.movies.app;
 
+import android.app.Activity;
 import android.app.SearchManager;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -12,6 +15,7 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.widget.SearchView;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -34,12 +38,16 @@ import com.geaden.android.movies.app.sync.MovieSyncAdapter;
 public class MovieGridFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,
         SharedPreferences.OnSharedPreferenceChangeListener {
 
-    private static final String SELECTED_KEY = "selected";
+    private static final String SELECTED_MOVIE_KEY = "selected";
     protected GridView mMoviesGrid;
 
     private final int MOVIES_LOADER = 0;
 
     private MoviesAdapter mMoviesAdapter;
+
+    // Defines whether auto select view in movie grid layout
+    private boolean mAutoSelectMovie = false;
+
     private int mPosition = GridView.INVALID_POSITION;
     private String LOG_TAG = getClass().getSimpleName();
 
@@ -78,6 +86,9 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     public final static int FAVORED_AT = 10;
     public final static int SORT_ORDER = 11;
 
+    // Initialy selected movie
+    private Uri mInitialSelectedMovie;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -115,6 +126,15 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     @Override
+    public void onInflate(Activity activity, AttributeSet attrs, Bundle savedInstanceState) {
+        super.onInflate(activity, attrs, savedInstanceState);
+        TypedArray a = activity.obtainStyledAttributes(attrs, R.styleable.MovieGridFragment,
+                0, 0);
+        mAutoSelectMovie = a.getBoolean(R.styleable.MovieGridFragment_autoSelectMovie, false);
+        a.recycle();
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_movies, container, false);
@@ -127,11 +147,9 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
-                Log.d(LOG_TAG, "OnItemClickListener " + cursor);
                 if (cursor != null) {
                     long movieId = cursor.getLong(MOVIE_ID);
                     Uri movieUri = MovieContract.MovieEntry.buildMovieUri(movieId);
-                    Log.d(LOG_TAG, "Selected movie url " + movieUri);
                     ((Callback) getActivity()).onItemSelected(movieUri);
                 }
                 mPosition = position;
@@ -143,12 +161,16 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
         // or magically appeared to take advantage of room, but data or place in the app was never
         // actually *lost*.
         Log.d(LOG_TAG, "Saved instance " + savedInstanceState);
-        if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)) {
+        if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_MOVIE_KEY)) {
             // The gridview probably hasn't even been populated yet.  Actually perform the
             // swapout in onLoadFinished.
-            mPosition = savedInstanceState.getInt(SELECTED_KEY);
+            mPosition = savedInstanceState.getInt(SELECTED_MOVIE_KEY);
         }
         return rootView;
+    }
+
+    public void setInitialSelectedMovie(Uri initialSelectedMovie) {
+        mInitialSelectedMovie = initialSelectedMovie;
     }
 
     /**
@@ -244,6 +266,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             if (!sortOrder.equals(getString(R.string.pref_sort_favourite))) {
                 MovieSyncAdapter.syncImmediately(getActivity());
             }
+            mPosition = GridView.INVALID_POSITION;
             getLoaderManager().restartLoader(MOVIES_LOADER, null, this);
         }
     }
@@ -290,22 +313,41 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
     @Override
     public void onSaveInstanceState(Bundle outState) {
         // When tablets rotate, the currently selected list item needs to be saved.
-        // When no item is selected, mPosition will be set to Listview.INVALID_POSITION,
+        // When no item is selected, mPosition will be set to GridView.INVALID_POSITION,
         // so check for that before storing.
         if (mPosition != GridView.INVALID_POSITION) {
-            outState.putInt(SELECTED_KEY, mPosition);
+            outState.putInt(SELECTED_MOVIE_KEY, mPosition);
         }
         super.onSaveInstanceState(outState);
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        Log.d(LOG_TAG, "Data " + data.getCount());
         mMoviesAdapter.swapCursor(data);
-        if (data.getCount() > 0 && mPosition != GridView.INVALID_POSITION) {
-            mMoviesGrid.smoothScrollToPosition(mPosition);
-        }
         updateEmptyView();
+        if (data.getCount() > 0) {
+            if (mPosition == GridView.INVALID_POSITION &&
+                    null != mInitialSelectedMovie) {
+                Cursor c = mMoviesAdapter.getCursor();
+                int count = c.getCount();
+                for ( int i = 0; i < count; i++ ) {
+                    c.moveToPosition(i);
+                    if (c.getLong(MOVIE_ID) == ContentUris.parseId(mInitialSelectedMovie)) {
+                        mPosition = i;
+                        break;
+                    }
+
+                }
+            }
+            if (mPosition == GridView.INVALID_POSITION) mPosition = 0;
+            // If we don't need to restart the loader, and there's a desired position to restore
+            // to, do so now.
+            mMoviesGrid.smoothScrollToPosition(mPosition);
+            // Check if auto selection needed
+            if (mAutoSelectMovie) {
+                mMoviesGrid.setSelection(mPosition);
+            }
+        }
     }
 
     @Override

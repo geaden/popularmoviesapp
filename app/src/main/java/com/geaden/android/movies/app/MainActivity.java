@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity implements MovieGridFragment
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Uri movieUri = getIntent() != null ? getIntent().getData() : null;
         setContentView(R.layout.activity_main);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
@@ -40,14 +41,29 @@ public class MainActivity extends AppCompatActivity implements MovieGridFragment
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a
             // fragment transaction
-            if (savedInstanceState != null) {
+            if (savedInstanceState == null) {
+                Fragment fragment;
+                if (movieUri != null) {
+                    Bundle args = new Bundle();
+                    args.putParcelable(MovieDetailFragment.MOVIE_DETAIL_URI, movieUri);
+                    fragment = MovieDetailFragment.newInstance(args);
+                } else {
+                    fragment = new MovieDetailFragment();
+                }
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.movie_detail_container, new MovieDetailFragment(), MOVIEDETAILFRAGMENT_TAG)
+                        .replace(R.id.movie_detail_container, fragment, MOVIEDETAILFRAGMENT_TAG)
                         .commit();
             }
         } else {
             mTwoPane = false;
         }
+
+        if (movieUri != null) {
+            MovieGridFragment movieGridFragment = ((MovieGridFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.movie_grid_fragment));
+            movieGridFragment.setInitialSelectedMovie(movieUri);
+        }
+
         // make sure we've gotten an account created and we're syncing
         MovieSyncAdapter.initializeSyncAdapter(this);
     }
@@ -66,7 +82,8 @@ public class MainActivity extends AppCompatActivity implements MovieGridFragment
                     .replace(R.id.movie_detail_container, fragment, MOVIEDETAILFRAGMENT_TAG)
                     .commit();
         } else {
-            Intent intent = new Intent(this, MovieDetailActivity.class).setData(movieUri);
+            Intent intent = new Intent(this, MovieDetailActivity.class)
+                    .setData(movieUri);
             startActivity(intent);
         }
     }

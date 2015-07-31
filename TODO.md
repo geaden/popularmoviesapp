@@ -1,13 +1,22 @@
 # Known issues 
 
-- [] When no trailers available "No trailers available." is on the same line with "Reviews" header.
+- [ ] Movie is not auto selected on first load
+- [ ] Selected movie id is not reseted on change sort order
+- [ ] Part of list view is visible (inside trailers/reviews)
+- [ ] Gappless gridview like in guidelines
+- [ ] Share menu item is not shown in phone layout
+
+# Done
+
+- [x] When no trailers available "No trailers available." is on the same line with "Reviews" header.
 - [x] Reviews are not updated in tablet mode.
-- [] Accidental crashes due to closed cursor
+- [x] Accidental crashes due to closed cursor
 - [x] Tablet layout when changing movie check favourite triggered
-- [] Tablet landscape mode no selection visible.
+- [x] Tablet landscape mode no selection visible.
 - [x] In tablet reviews and trailers not always corresponds to the selected movie.
 - [x] Reviews are not populated in database.
 - [x] In landscape mode number of columns should be at least 3 for phone layout.
 - [x] Movies are deleted and refetched every time sort list is changed (from popular to most voted).
 - [x] MOVIE_LOADER is not restarted when changed sort order and back button pressed.
-- [] No movie selected on initial load or orientation changes (only for two pane mode)
+- [x] No movie selected on initial load or orientation changes (only for two pane mode)
+

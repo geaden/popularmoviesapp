@@ -78,28 +78,36 @@
                 android:adjustViewBounds="true"
                 tools:src="@drawable/poster"/>
 
-            <!-- Movie release date icon -->
-            <ImageView
+            <!-- Movie release date holder -->
+            <LinearLayout
+                android:id="@+id/movie_release_date_holder"
+                android:layout_width="wrap_content"
+                android:padding="@dimen/movie_detail_release_date_holder_padding"
+                android:layout_height="wrap_content"
                 android:layout_toRightOf="@id/movie_detail_poster"
-                android:id="@+id/movie_release_date_icon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_film_reel" />
+                android:orientation="horizontal">
+                <!-- Movie release date icon -->
+                <ImageView
+                    android:id="@+id/movie_release_date_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/movie_release_date_description"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_film_reel" />
 
-            <!-- Movie release date -->
-            <TextView
-                android:id="@+id/movie_detail_release_date"
-                style="@style/Movie.ReleaseDate"
-                android:layout_toRightOf="@id/movie_release_date_icon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                tools:text="2015"/>
-
+                <!-- Movie release date -->
+                <TextView
+                    android:id="@+id/movie_detail_release_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Movie.ReleaseDate"
+                    tools:text="2015"/>
+            </LinearLayout>
             <!-- Movie duration -->
             <TextView
                 android:id="@+id/movie_detail_duration"
                 android:layout_toRightOf="@id/movie_detail_poster"
-                android:layout_below="@id/movie_detail_release_date"
+                android:layout_below="@id/movie_release_date_holder"
                 style="@style/Movie.Overview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -115,70 +123,76 @@
                 tools:text="lorem ipsum"/>
 
             <!-- Movie trailers -->
-            <TextView
-                android:id="@+id/movie_trailers_header"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:id="@+id/movie_trailers_wrapper"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/movie_detail_overview"
-                style="@style/Movie.Headers"
-                android:text="@string/movie_trailers_header"/>
-            <!-- Horizontal line -->
-            <View
-                android:id="@+id/movie_trailers_horizontal_line"
-                android:layout_width="match_parent"
-                android:layout_height="2dp"
-                android:layout_below="@id/movie_trailers_header"
-                android:background="@color/primary_detail"/>
-            <!-- Movie trailers list -->
-            <TextView
-                android:id="@+id/trailers_empty"
-                android:text="@string/empty_trailers_list"
-                android:layout_below="@id/movie_trailers_horizontal_line"
-                style="@style/Movie.Empty.Lists"
-                android:layout_marginBottom="@dimen/trailers_empty_margin_bottom"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-            <ListView
-                android:id="@+id/movie_trailers_list"
-                android:layout_below="@id/movie_trailers_horizontal_line"
-                android:layout_width="match_parent"
-                android:scrollbars="none"
-                android:layout_height="wrap_content"
-                tools:listitem="@layout/list_trailer_item"
-                android:dividerHeight="@dimen/movie_trailers_list_divider_height"
-                android:divider="@android:color/darker_gray" />
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/movie_trailers_header"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Movie.Headers"
+                    android:text="@string/movie_trailers_header"/>
+                <!-- Horizontal line -->
+                <View
+                    android:id="@+id/movie_trailers_horizontal_line"
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:background="@color/primary_detail"/>
+                <!-- Movie trailers list -->
+                <TextView
+                    android:id="@+id/trailers_empty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/empty_trailers_list"
+                    style="@style/Movie.Empty.Lists"/>
+                <ListView
+                    android:id="@+id/movie_trailers_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none"
+                    tools:listitem="@layout/list_trailer_item"
+                    android:dividerHeight="@dimen/movie_trailers_list_divider_height"
+                    android:divider="@android:color/darker_gray" />
+            </LinearLayout>
+
             <!-- Movie reviews -->
-            <TextView
-                android:id="@+id/movie_reviews_header"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:id="@+id/movie_reviews_wrapper"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/Movie.Headers"
-                android:text="@string/movie_review_title"
-                android:layout_below="@id/movie_trailers_list"/>
-            <!-- Horizontal line -->
-            <View
-                android:id="@+id/movie_reviews_horizontal_line"
-                android:layout_width="match_parent"
-                android:layout_height="2dp"
-                android:layout_below="@id/movie_reviews_header"
-                android:background="@color/primary_detail"/>
-            <!-- Movie reviews list -->
-            <TextView
-                android:id="@+id/reviews_empty"
-                android:text="@string/empty_reviews_list"
-                android:layout_below="@id/movie_reviews_horizontal_line"
-                style="@style/Movie.Empty.Lists"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-            <ListView
-                android:id="@+id/movie_reviews_list"
-                android:layout_width="match_parent"
-                android:layout_below="@id/movie_reviews_horizontal_line"
-                android:layout_height="wrap_content"
-                android:scrollbars="none"
-                tools:listitem="@layout/list_review_item"
-                android:dividerHeight="@dimen/movie_trailers_list_divider_height"
-                android:divider="@android:color/darker_gray" />
+                android:orientation="vertical"
+                android:layout_below="@id/movie_trailers_wrapper">
+                <TextView
+                    android:id="@+id/movie_reviews_header"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Movie.Headers"
+                    android:text="@string/movie_review_title" />
+                <!-- Horizontal line -->
+                <View
+                    android:id="@+id/movie_reviews_horizontal_line"
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:background="@color/primary_detail"/>
+                <!-- Movie reviews list -->
+                <TextView
+                    android:id="@+id/reviews_empty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/empty_reviews_list"
+                    style="@style/Movie.Empty.Lists" />
+                <ListView
+                    android:id="@+id/movie_reviews_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none"
+                    tools:listitem="@layout/list_review_item"
+                    android:dividerHeight="@dimen/movie_trailers_list_divider_height"
+                    android:divider="@android:color/darker_gray" />
+            </LinearLayout>
         </RelativeLayout>
     </ScrollView>
 </LinearLayout>

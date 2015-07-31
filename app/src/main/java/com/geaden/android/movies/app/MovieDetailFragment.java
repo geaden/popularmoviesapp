@@ -84,13 +84,12 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     private RatingBar mMovieRating;
 
     // Indicates if movie is favourite
-    private boolean mFavourite = false;
+    private boolean mFavored = false;
 
     private final int MOVIE_DETAIL_LOADER = 0;
     private final int MOVIE_TRAILERS_LOADER = 1;
     private final int MOVIE_REVIEWS_LOADER = 2;
 
-    private long mMovieId;
     private TextView mMovieReleaseDate;
     private ShareActionProvider mShareActionProvider;
     private String LOG_TAG = getClass().getSimpleName();
@@ -164,8 +163,6 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         if (arguments != null) {
             mUri = arguments.getParcelable(MOVIE_DETAIL_URI);
             Log.d(LOG_TAG, "mUri " + mUri);
-            mMovieId = ContentUris.parseId(mUri);
-            Log.d(LOG_TAG, "mMovieId " + mMovieId);
         }
         mMovieTitle = (TextView) rootView.findViewById(R.id.movie_detail_title);
         mMovieOverview = (TextView) rootView.findViewById(R.id.movie_detail_overview);
@@ -173,6 +170,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         mMovieRating = (RatingBar) rootView.findViewById(R.id.movie_detail_rating);
         mMovieRatingNumber = (TextView) rootView.findViewById(R.id.movie_detail_rating_number);
         mMovieReleaseDate = (TextView) rootView.findViewById(R.id.movie_detail_release_date);
+
         // Trailers list
         mTrailersList = (ListView) rootView.findViewById(R.id.movie_trailers_list);
         mTrailersAdapter = new TrailersAdapter(getActivity(), null, 0);
@@ -186,12 +184,14 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                     Cursor cursor = mTrailersAdapter.getCursor();
                     if (cursor != null && cursor.moveToPosition(position)) {
                         String trailerKey = cursor.getString(INDEX_TRAILER_KEY);
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(Utility.getTrailerUrl(trailerKey)));
+                        Intent intent = new Intent(Intent.ACTION_VIEW,
+                                Uri.parse(Utility.getTrailerUrl(trailerKey)));
                         startActivity(intent);
                     }
                 }
             }
         });
+
         // Reviews list
         mReviewsList = (ListView) rootView.findViewById(R.id.movie_reviews_list);
         mReviewsAdapter = new ReviewsAdapter(getActivity(), null, 0);
@@ -224,7 +224,6 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        LoaderManager.enableDebugLogging(true);
         if (savedInstanceState != null) {
             mUri = savedInstanceState.getParcelable(MOVIE_DETAIL_URI);
         }
@@ -253,7 +252,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                             MovieContract.TrailerEntry.CONTENT_URI,
                             TRAILER_PROJECTION,
                             MovieContract.TrailerEntry.COLUMN_MOVIE_ID + " = ?",
-                            new String[]{Long.toString(mMovieId)},
+                            new String[]{Long.toString(ContentUris.parseId(mUri))},
                             null);
                 case MOVIE_REVIEWS_LOADER:
                     return new CursorLoader(
@@ -261,7 +260,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                             MovieContract.ReviewEntry.CONTENT_URI,
                             REVIEW_PROJECTION,
                             MovieContract.ReviewEntry.COLUMN_MOVIE_ID + " = ?",
-                            new String[]{Long.toString(mMovieId)},
+                            new String[]{Long.toString(ContentUris.parseId(mUri))},
                             null);
                 default:
                     throw new UnsupportedOperationException("Unknown loader: " + id);
@@ -290,7 +289,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
                     // If onCreateOptionsMenu has already happened, we need to update the share intent now.
                     if (mShareActionProvider != null) {
-                        mShareActionProvider.setShareIntent(createShareMovieIntent(mMovieId));
+                        mShareActionProvider.setShareIntent(createShareMovieIntent(ContentUris.parseId(mUri)));
                     }
 
                     AppCompatActivity activity = (AppCompatActivity) getActivity();
@@ -302,25 +301,24 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                             activity.getSupportActionBar().setDisplayShowTitleEnabled(false);
                             activity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
                         }
-                        Menu menu = toolbarView.getMenu();
-                        if ( null != menu ) menu.clear();
                         // Locate MenuItem with ShareActionProvider
                         toolbarView.inflateMenu(R.menu.menu_movie_detail);
-                        mFavourite = data.getLong(MovieGridFragment.FAVORED_AT) > 0;
-                        ToggleButton favouriteToggle = (ToggleButton) toolbarView.findViewById(R.id.favourite_toggle_btn);
-                        favouriteToggle.setChecked(mFavourite);
+                        Menu menu = toolbarView.getMenu();
+                        if ( null != menu ) menu.clear();
+                        mFavored = data.getLong(MovieGridFragment.FAVORED_AT) > 0;
+                        ToggleButton favouriteToggle = (ToggleButton) toolbarView.findViewById(
+                                R.id.favourite_toggle_btn);
+                        favouriteToggle.setChecked(mFavored);
                         favouriteToggle.setOnCheckedChangeListener(new FavoriteCheckedListener());
                         finishCreatingMenu(menu, data);
                     }
                 }
                 break;
             case MOVIE_TRAILERS_LOADER:
-                Log.d(LOG_TAG, "Trailers: " + data.getCount());
                 mTrailersAdapter.swapCursor(data);
                 Utility.setListViewHeightBasedOnItems(mTrailersList);
                 break;
             case MOVIE_REVIEWS_LOADER:
-                Log.d(LOG_TAG, "Reviews: " + data.getCount());
                 mReviewsAdapter.swapCursor(data);
                 Utility.setListViewHeightBasedOnItems(mReviewsList);
                 break;
@@ -336,11 +334,11 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            mFavourite = isChecked;
-            if (mFavourite) {
+            mFavored = isChecked;
+            if (mFavored) {
                 // Add movie to favorites
                 ContentValues cv = new ContentValues();
-                cv.put(MovieContract.FavoriteEntry.COLUMN_MOVIE_ID, mMovieId);
+                cv.put(MovieContract.FavoriteEntry.COLUMN_MOVIE_ID, ContentUris.parseId(mUri));
                 getActivity().getContentResolver().insert(
                         MovieContract.FavoriteEntry.CONTENT_URI,
                         cv);
@@ -348,9 +346,9 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                 // Remove movie from favorites
                 getActivity().getContentResolver().delete(MovieContract.FavoriteEntry.CONTENT_URI,
                         MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + " = ?",
-                        new String[]{Long.toString(mMovieId)});
+                        new String[]{Long.toString(ContentUris.parseId(mUri))});
             }
-            Toast.makeText(getActivity(), mFavourite ? getString(R.string.favorites_added) :
+            Toast.makeText(getActivity(), mFavored ? getString(R.string.favorites_added) :
                             getString(R.string.favorites_removed),
                     Toast.LENGTH_SHORT).show();
         }
@@ -367,6 +365,12 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(shareItem);
         long extMovieId = cursor.getLong(MovieGridFragment.MOVIE_ID);
         setShareIntent(createShareMovieIntent(extMovieId));
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(MOVIE_DETAIL_URI, mUri);
     }
 
     @Override
