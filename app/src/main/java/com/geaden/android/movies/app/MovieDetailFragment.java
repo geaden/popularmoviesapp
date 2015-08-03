@@ -120,6 +120,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
     /**
      * Returns movie url from provided movie id
+     *
      * @param extMovieId the external movie id
      * @return the movie url
      */
@@ -130,6 +131,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
     /**
      * Attaches intent to share action provider
+     *
      * @param shareIntent share intent to attach
      */
     private void setShareIntent(Intent shareIntent) {
@@ -180,7 +182,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         mTrailersList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if ( null != mTrailersAdapter) {
+                if (null != mTrailersAdapter) {
                     Cursor cursor = mTrailersAdapter.getCursor();
                     if (cursor != null && cursor.moveToPosition(position)) {
                         String trailerKey = cursor.getString(INDEX_TRAILER_KEY);
@@ -201,7 +203,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         mReviewsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if ( null != mReviewsAdapter) {
+                if (null != mReviewsAdapter) {
                     Cursor cursor = mReviewsAdapter.getCursor();
                     if (cursor != null && cursor.moveToPosition(position)) {
                         String reviewUrl = cursor.getString(INDEX_REVIEW_URL);
@@ -295,16 +297,15 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                     AppCompatActivity activity = (AppCompatActivity) getActivity();
                     Toolbar toolbarView = (Toolbar) getView().findViewById(R.id.detail_toolbar);
 
-                    if ( null != toolbarView ) {
+                    if (null != toolbarView) {
                         if (activity instanceof MovieDetailActivity) {
                             activity.setSupportActionBar(toolbarView);
                             activity.getSupportActionBar().setDisplayShowTitleEnabled(false);
                             activity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
                         }
-                        // Locate MenuItem with ShareActionProvider
-                        toolbarView.inflateMenu(R.menu.menu_movie_detail);
                         Menu menu = toolbarView.getMenu();
-                        if ( null != menu ) menu.clear();
+                        if (null != menu) menu.clear();
+                        toolbarView.inflateMenu(R.menu.menu_movie_detail);
                         mFavored = data.getLong(MovieGridFragment.FAVORED_AT) > 0;
                         ToggleButton favouriteToggle = (ToggleButton) toolbarView.findViewById(
                                 R.id.favourite_toggle_btn);
@@ -355,12 +356,22 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     }
 
     /**
+     * Triggered when movie uri is changed
+     *
+     * @param movieUri
+     */
+    public void onMovieUriChanged(Uri movieUri) {
+        mUri = movieUri;
+    }
+
+    /**
      * Finishes constructing toolbar menu, by adding share intent and modifying favourite icon
-     * @param menu the toolbar menu
+     *
+     * @param menu   the toolbar menu
      * @param cursor the movie cursor
      */
     private void finishCreatingMenu(Menu menu, final Cursor cursor) {
-        // Fetch and store ShareActionProvider
+        // Locate MenuItem with ShareActionProvider
         MenuItem shareItem = menu.findItem(R.id.action_share);
         mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(shareItem);
         long extMovieId = cursor.getLong(MovieGridFragment.MOVIE_ID);

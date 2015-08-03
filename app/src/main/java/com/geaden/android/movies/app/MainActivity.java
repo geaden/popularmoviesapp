@@ -17,7 +17,7 @@ import com.geaden.android.movies.app.sync.MovieSyncAdapter;
 
 
 public class MainActivity extends AppCompatActivity implements MovieGridFragment.Callback {
-    private static final String MOVIEDETAILFRAGMENT_TAG = "movie_detail_tag";
+    public static final String MOVIEDETAILFRAGMENT_TAG = "movie_detail_tag";
     private Toolbar mToolbar;
     // Indicates if two pane mode should be used
     private boolean mTwoPane;

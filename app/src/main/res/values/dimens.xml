@@ -19,7 +19,7 @@
     <dimen name="movie_detail_release_size">22sp</dimen>
 
     <!-- Movie grid -->
-    <dimen name="movie_grid_column_width">85dp</dimen>
+    <dimen name="movie_grid_column_width">95dp</dimen>
 
     <dimen name="movie_empty_lists_size">14dp</dimen>
     <!-- Movie reviews -->

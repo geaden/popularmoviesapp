@@ -9,6 +9,8 @@ import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -53,7 +55,9 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
 
     private String mMovieQuery;
 
-    /** Movie column projection **/
+    /**
+     * Movie column projection
+     **/
     public static final String[] MOVIE_PROJECTION = {
             MovieContract.MovieEntry.TABLE_NAME + "." +
                     MovieContract.MovieEntry._ID,
@@ -72,7 +76,9 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             MovieContract.MovieEntry.COLUMN_SORT_ORDER
     };
 
-    /** Corresponding column indices **/
+    /**
+     * Corresponding column indices
+     **/
     public final static int _ID = 0;
     public final static int MOVIE_ID = 1;
     public final static int TITLE = 2;
@@ -88,6 +94,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
 
     // Initialy selected movie
     private Uri mInitialSelectedMovie;
+    private MovieGridItemClickListener mMovieGridItemClickListener;
 
 
     @Override
@@ -143,18 +150,8 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
         mMoviesGrid.setEmptyView(emptyView);
         mMoviesAdapter = new MoviesAdapter(getActivity(), null, 0);
         mMoviesGrid.setAdapter(mMoviesAdapter);
-        mMoviesGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
-                if (cursor != null) {
-                    long movieId = cursor.getLong(MOVIE_ID);
-                    Uri movieUri = MovieContract.MovieEntry.buildMovieUri(movieId);
-                    ((Callback) getActivity()).onItemSelected(movieUri);
-                }
-                mPosition = position;
-            }
-        });
+        mMovieGridItemClickListener = new MovieGridItemClickListener();
+        mMoviesGrid.setOnItemClickListener(mMovieGridItemClickListener);
         // If there's instance state, mine it for useful information.
         // The end-goal here is that the user never knows that turning their device sideways
         // does crazy lifecycle related things.  It should feel like some stuff stretched out,
@@ -167,6 +164,19 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             mPosition = savedInstanceState.getInt(SELECTED_MOVIE_KEY);
         }
         return rootView;
+    }
+
+    private class MovieGridItemClickListener implements AdapterView.OnItemClickListener {
+        @Override
+        public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+            Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
+            if (cursor != null) {
+                long movieId = cursor.getLong(MOVIE_ID);
+                Uri movieUri = MovieContract.MovieEntry.buildMovieUri(movieId);
+                ((Callback) getActivity()).onItemSelected(movieUri);
+            }
+            mPosition = position;
+        }
     }
 
     public void setInitialSelectedMovie(Uri initialSelectedMovie) {
@@ -182,6 +192,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
 
     /**
      * Performs query for list of movides
+     *
      * @param query the query
      */
     private void onMovieSearchQueryChanged(String query) {
@@ -242,7 +253,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
                 newSelectionArgs[newSelectionArgs.length - 1] = mMovieQuery + "%";
                 selectionArgs = newSelectionArgs;
             } else {
-                selectionArgs = new String[] { mMovieQuery + "%" };
+                selectionArgs = new String[]{mMovieQuery + "%"};
             }
         }
         return new CursorLoader(getActivity(),
@@ -330,7 +341,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
                     null != mInitialSelectedMovie) {
                 Cursor c = mMoviesAdapter.getCursor();
                 int count = c.getCount();
-                for ( int i = 0; i < count; i++ ) {
+                for (int i = 0; i < count; i++) {
                     c.moveToPosition(i);
                     if (c.getLong(MOVIE_ID) == ContentUris.parseId(mInitialSelectedMovie)) {
                         mPosition = i;
@@ -346,6 +357,22 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             // Check if auto selection needed
             if (mAutoSelectMovie) {
                 mMoviesGrid.setSelection(mPosition);
+                Cursor c = mMoviesAdapter.getCursor();
+                if (c.moveToPosition(mPosition)) {
+                    final long movieId = c.getLong(MOVIE_ID);
+                    // Android bug? http://stackoverflow.com/questions/22788684/can-not-perform-this-action-inside-of-onloadfinished
+                    final int WHAT = 1;
+                    Handler handler = new Handler() {
+                        @Override
+                        public void handleMessage(Message msg) {
+                            if (msg.what == WHAT) {
+                                ((MainActivity) getActivity()).onItemSelected(MovieContract
+                                        .MovieEntry.buildMovieUri(movieId));
+                            }
+                        }
+                    };
+                    handler.sendEmptyMessage(WHAT);
+                }
             }
         }
     }
