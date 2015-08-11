@@ -1,13 +1,15 @@
 # Known issues 
 
-- [ ] Movie is not auto selected on first load
-- [ ] Selected movie id is not reseted on change sort order
-- [ ] Part of list view is visible (inside trailers/reviews)
-- [ ] Gappless gridview like in guidelines
-- [ ] Share menu item is not shown in phone layout
+- [ ] Image placeholder for movies with no poster
+- [ ] Gapless gridview like in guidelines (almost there)
+- [ ] Adjust list item text size in table layout (300 is not enough)
 
 # Done
 
+- [x] Part of list view is visible (inside trailers/reviews)
+- [x] Share menu item is not shown in phone layout
+- [x] Selected movie id is not reseted on change sort order
+- [x] Movie is not auto selected on first load
 - [x] When no trailers available "No trailers available." is on the same line with "Reviews" header.
 - [x] Reviews are not updated in tablet mode.
 - [x] Accidental crashes due to closed cursor

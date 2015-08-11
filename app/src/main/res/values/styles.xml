@@ -93,8 +93,7 @@
 
     <!-- Movie grid style -->
     <style name="MovieGridStyle">
-        <item name="android:numColumns">auto_fit</item>
-        <item name="android:stretchMode">columnWidth</item>
+        <!-- Dummy movie grid style. -->
     </style>
 
 </resources>

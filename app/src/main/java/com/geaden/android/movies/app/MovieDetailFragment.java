@@ -144,6 +144,10 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        if (getActivity() instanceof MovieDetailActivity) {
+            // Inflate the menu; this adds items to the action bar if it is present.
+            inflater.inflate(R.menu.menu_movie_detail, menu);
+        }
         super.onCreateOptionsMenu(menu, inflater);
     }
 
@@ -287,8 +291,13 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                     mMoviePoster.setContentDescription(title);
                     mMovieRating.setRating(Utility.getRating(getActivity(), voteAvg));
                     mMovieRatingNumber.setText(getString(R.string.movie_rating_number, voteAvg));
-                    mMovieReleaseDate.setText(Utility.getReleaseYear(releaseDate));
-
+                    String releaseYear = Utility.getReleaseYear(releaseDate);
+                    if (null != releaseDate) {
+                        mMovieReleaseDate.setText(releaseYear);
+                    } else {
+                        // Hide release date holder if now release date
+                        getView().findViewById(R.id.movie_release_date_holder).setVisibility(View.INVISIBLE);
+                    }
                     // If onCreateOptionsMenu has already happened, we need to update the share intent now.
                     if (mShareActionProvider != null) {
                         mShareActionProvider.setShareIntent(createShareMovieIntent(ContentUris.parseId(mUri)));
@@ -353,15 +362,6 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                             getString(R.string.favorites_removed),
                     Toast.LENGTH_SHORT).show();
         }
-    }
-
-    /**
-     * Triggered when movie uri is changed
-     *
-     * @param movieUri
-     */
-    public void onMovieUriChanged(Uri movieUri) {
-        mUri = movieUri;
     }
 
     /**

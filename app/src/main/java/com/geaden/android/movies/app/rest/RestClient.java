@@ -17,7 +17,7 @@ import retrofit.converter.GsonConverter;
  * @author Gennady Denisov
  */
 public class RestClient {
-    private final static String TMDB_API_KEY = "a1ad19ad6e16a5c7042ab107bdde5504";
+    private final static String TMDB_API_KEY = "YourApiKeyHere";
 
     private static TmdbService sService;
 
