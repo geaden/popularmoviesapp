@@ -11,7 +11,7 @@
         android:layout_height="?attr/actionBarSize" />
 
     <fragment
-        android:id="@+id/fragment"
+        android:id="@+id/movie_grid_fragment"
         android:name="com.geaden.android.movies.app.MovieGridFragment"
         tools:layout="@layout/fragment_movies"
         android:layout_width="match_parent"

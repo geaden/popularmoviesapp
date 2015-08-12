@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SyncRequest;
 import android.content.SyncResult;
+import android.database.DatabaseUtils;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -18,10 +19,15 @@ import android.util.Log;
 
 import com.geaden.android.movies.app.R;
 import com.geaden.android.movies.app.Utility;
+import com.geaden.android.movies.app.data.MovieContract;
 import com.geaden.android.movies.app.data.MovieContract.MovieEntry;
+import com.geaden.android.movies.app.data.MovieContract.ReviewEntry;
+import com.geaden.android.movies.app.data.MovieContract.TrailerEntry;
+import com.geaden.android.movies.app.data.MovieDbHelper;
 import com.geaden.android.movies.app.models.Movie;
+import com.geaden.android.movies.app.models.Review;
+import com.geaden.android.movies.app.models.Trailer;
 import com.geaden.android.movies.app.rest.RestClient;
-import com.geaden.android.movies.app.rest.UnauthorizedException;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -39,21 +45,22 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     public static final int CONNECTION_OK = 0;
     public static final int CONNECTION_SERVER_DOWN = 1;
     public static final int CONNECTION_SERVER_INVALID = 2;
-    public static final int CONNECTION_UNKOWN = 3;
+    public static final int CONNECTION_UNKNOWN = 3;
     public static final int CONNECTION_SYNC = 4;
 
-    // Interval at which to sync with the weather, in milliseconds.
-    // 1000 milliseconds (1 second) * 60 seconds (1 minute) * 180 = 3 hours
-    public static final int SYNC_INTERVAL = 60 * 180;
+    // Interval at which to sync with the TMDB, in seconds.
+    public static final int SYNC_INTERVAL = 60 * 60 * 3;
     public static final int SYNC_FLEXTIME = SYNC_INTERVAL / 3;
+    private static final String MANUAL_SYNC = "manual_sync";
 
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({CONNECTION_OK,
             CONNECTION_SERVER_DOWN,
             CONNECTION_SERVER_INVALID,
-            CONNECTION_UNKOWN,
+            CONNECTION_UNKNOWN,
             CONNECTION_SYNC})
-    public @interface ConnectionStatus {}
+    public @interface ConnectionStatus {
+    }
 
     public MovieSyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
@@ -62,31 +69,76 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(LOG_TAG, "Starting sync");
-        setConnectionStatus(getContext(), CONNECTION_SYNC);
         String sortOrder = Utility.getPreferredSortOrder(getContext());
         try {
-            List<Movie> movieList = RestClient.getsInstance().queryMovies(sortOrder);
-            addMovies(movieList);
-        } catch (UnauthorizedException e) {
-            Log.e(LOG_TAG, "Error retrieving movies", e);
-            setConnectionStatus(getContext(), CONNECTION_UNKOWN);
+            // Sync for current preferred sorting order
+            boolean manualSync = null != extras
+                    && extras.containsKey(MANUAL_SYNC)
+                    && extras.getBoolean(MANUAL_SYNC);
+            if (manualSync) {
+                Log.d(LOG_TAG, "Manual sync with TMDB");
+                // Get number of stored locally movies for the preferred sort order
+                long count = DatabaseUtils.longForQuery(
+                        MovieDbHelper.getInstance(getContext()).getReadableDatabase(),
+                        "SELECT COUNT(*) FROM " + MovieEntry.TABLE_NAME +
+                                " WHERE " + MovieEntry.COLUMN_SORT_ORDER + " = ?" +
+                                " AND " + MovieEntry.COLUMN_MOVIE_ID + " NOT IN (SELECT " +
+                                MovieContract.FavoriteEntry.COLUMN_MOVIE_ID + " FROM " +
+                                MovieContract.FavoriteEntry.TABLE_NAME + ")",
+                        new String[]{sortOrder});
+                Log.d(LOG_TAG, "Sync count " + count + " for sort order " + sortOrder);
+                if (count > 0) {
+                    // Do not sync with TMDB, just show what already have
+                    Log.d(LOG_TAG, "Skipping movie sync for " + sortOrder);
+                    return;
+                }
+            }
+            if (!manualSync) {
+                // Clean up movies that are not in favorites
+                // to prevent endless history
+                MovieDbHelper.getInstance(getContext()).getWritableDatabase().execSQL("DELETE FROM "
+                        + MovieEntry.TABLE_NAME + " WHERE "
+                        + MovieEntry.COLUMN_MOVIE_ID +
+                        " NOT IN (SELECT " + MovieContract.FavoriteEntry.COLUMN_MOVIE_ID +
+                        " FROM " + MovieContract.FavoriteEntry.TABLE_NAME + ")");
+            }
+            setConnectionStatus(getContext(), CONNECTION_SYNC);
+            syncMovies(sortOrder);
+            setConnectionStatus(getContext(), CONNECTION_OK);
+            Log.d(LOG_TAG, "Sync completed.");
         } catch (Throwable e) {
             Log.e(LOG_TAG, "Unknown server error", e);
-            setConnectionStatus(getContext(), CONNECTION_UNKOWN);
+            setConnectionStatus(getContext(), CONNECTION_UNKNOWN);
         }
     }
 
     /**
+     * Performs movies synchronization
+     *
+     * @param sortOrder the sort order to perform sync for
+     */
+    private void syncMovies(String sortOrder) throws Throwable {
+        if (sortOrder.equals(getContext().getString(R.string.pref_sort_favourite))) {
+            // If current sort order is "favorites" then sync for default sort order
+            sortOrder = getContext().getString(R.string.pref_default_sort_order_value);
+        }
+        List<Movie> movieList = RestClient.getsInstance().queryMovies(sortOrder);
+        addMovies(movieList, sortOrder);
+    }
+
+    /**
      * Helper method to have the sync adapter sync immediately
+     *
      * @param context An app context
      */
     public static void syncImmediately(Context context) {
         Bundle bundle = new Bundle();
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-         /*
+        bundle.putBoolean(MANUAL_SYNC, true);
+        /*
          * Request the sync for the default account, authority, and
-         * manual sync settings
+         * sync settings
          */
         ContentResolver.requestSync(getSyncAccount(context),
                 context.getResources().getString(R.string.content_authority),
@@ -166,9 +218,11 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
     /**
      * Helper method to store list of movies in database
+     *
      * @param movieList the list of movies
+     * @param sortOrder the sort order that movie belongs to
      */
-    private void addMovies(List<Movie> movieList) {
+    private void addMovies(final List<Movie> movieList, String sortOrder) {
         // Insert the new movies data into the database
         Vector<ContentValues> cVVector = new Vector<ContentValues>(movieList.size());
         for (Movie movie : movieList) {
@@ -184,28 +238,103 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
             cv.put(MovieEntry.COLUMN_BACKDROP_PATH, movie.getBackdropPath());
             cv.put(MovieEntry.COLUMN_RELEASE_DATE,
                     Utility.formatDate(movie.getReleaseDate(), "yyyy-MM-dd"));
+            cv.put(MovieEntry.COLUMN_SORT_ORDER, sortOrder);
             cVVector.add(cv);
         }
 
         // add to database
-        if ( cVVector.size() > 0 ) {
-            // delete old data so we don't build up an endless history
-            getContext().getContentResolver().delete(MovieEntry.CONTENT_URI, null, null);
+        if (cVVector.size() > 0) {
             ContentValues[] cvArray = new ContentValues[cVVector.size()];
             cVVector.toArray(cvArray);
             getContext().getContentResolver().bulkInsert(MovieEntry.CONTENT_URI, cvArray);
         }
-        Log.d(LOG_TAG, "Sync Complete. " + cVVector.size() + " inserted");
-        setConnectionStatus(getContext(), CONNECTION_OK);
+        Log.d(LOG_TAG, "Movies synchronized. " + cVVector.size() + " inserted.");
+        // Sync trailers and reviews
+        // Due to API restrictions (40 requests at the time)
+        // no way to perform this in parallel
+        addTrailers(movieList);
+        addReviews(movieList);
+    }
+
+    /**
+     * Retrieves trailers and store in internal database
+     *
+     * @param movieList the list of available movies
+     */
+    private void addTrailers(List<Movie> movieList) {
+        for (Movie movie : movieList) {
+            try {
+                List<Trailer> trailers = RestClient.getsInstance().queryTrailers(movie.getId());
+                Vector<ContentValues> cVVector = new Vector<ContentValues>(1);
+                for (Trailer trailer : trailers) {
+                    ContentValues cv = new ContentValues();
+                    cv.put(TrailerEntry.COLUMN_MOVIE_ID, movie.getId());
+                    cv.put(TrailerEntry.COLUMN_TRAILER_ID, trailer.getId());
+                    cv.put(TrailerEntry.COLUMN_NAME, trailer.getName());
+                    cv.put(TrailerEntry.COLUMN_KEY, trailer.getKey());
+                    cv.put(TrailerEntry.COLUMN_ISO_639_1, trailer.getIso6391());
+                    cv.put(TrailerEntry.COLUMN_SIZE, trailer.getSize());
+                    cv.put(TrailerEntry.COLUMN_SITE, trailer.getSite());
+                    cv.put(TrailerEntry.COLUMN_TYPE, trailer.getType());
+                    cVVector.add(cv);
+                }
+
+                // Add trailers to database
+                if (cVVector.size() > 0) {
+                    ContentValues[] cvArray = new ContentValues[cVVector.size()];
+                    cVVector.toArray(cvArray);
+                    getContext().getContentResolver().bulkInsert(TrailerEntry.CONTENT_URI, cvArray);
+                }
+                Log.d(LOG_TAG, "Sync Trailers Complete. " + cVVector.size() + " inserted.");
+                setConnectionStatus(getContext(), CONNECTION_OK);
+            } catch (Throwable e) {
+                setConnectionStatus(getContext(), CONNECTION_SERVER_INVALID);
+            }
+        }
+    }
+
+    /**
+     * Retrieves trailers and store in internal database
+     *
+     * @param movieList the list of available movies
+     */
+    private void addReviews(List<Movie> movieList) {
+        for (Movie movie : movieList) {
+            try {
+                List<Review> reviews = RestClient.getsInstance().queryReviews(movie.getId());
+                Vector<ContentValues> cVVector = new Vector<ContentValues>(1);
+                for (Review review : reviews) {
+                    ContentValues cv = new ContentValues();
+                    cv.put(ReviewEntry.COLUMN_MOVIE_ID, movie.getId());
+                    cv.put(ReviewEntry.COLUMN_REVIEW_ID, review.getId());
+                    cv.put(ReviewEntry.COLUMN_AUTHOR, review.getAuthor());
+                    cv.put(ReviewEntry.COLUMN_CONTENT, review.getContent());
+                    cv.put(ReviewEntry.COLUMN_URL, review.getUrl());
+                    cVVector.add(cv);
+                }
+
+                // Add reviews to database
+                if (cVVector.size() > 0) {
+                    ContentValues[] cvArray = new ContentValues[cVVector.size()];
+                    cVVector.toArray(cvArray);
+                    getContext().getContentResolver().bulkInsert(ReviewEntry.CONTENT_URI, cvArray);
+                }
+                Log.d(LOG_TAG, "Sync Reviews Complete. " + cVVector.size() + " inserted.");
+                setConnectionStatus(getContext(), CONNECTION_OK);
+            } catch (Throwable e) {
+                setConnectionStatus(getContext(), CONNECTION_SERVER_INVALID);
+            }
+        }
     }
 
     /**
      * Sets the connection status into shared preference.  This function should not be called from
      * the UI thread because it uses commit to write to the shared preferences.
-     * @param c Context to get the PreferenceManager from.
+     *
+     * @param c          Context to get the PreferenceManager from.
      * @param connStatus The IntDef value to set
      */
-    static private void setConnectionStatus(Context c, @ConnectionStatus int connStatus){
+    static private void setConnectionStatus(Context c, @ConnectionStatus int connStatus) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(c);
         SharedPreferences.Editor spe = sp.edit();
         spe.putInt(c.getString(R.string.pref_conn_status_key), connStatus);

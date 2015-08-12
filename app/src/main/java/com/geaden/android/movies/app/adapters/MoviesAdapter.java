@@ -6,6 +6,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageView;
 
 import com.geaden.android.movies.app.MovieGridFragment;
@@ -34,17 +36,27 @@ public class MoviesAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder viewHolder = (ViewHolder) view.getTag();
+        if (cursor.isClosed()) return;
         String posterPath = cursor.getString(MovieGridFragment.POSTER_PATH);
         String title = cursor.getString(MovieGridFragment.TITLE);
+        boolean isFavourite = cursor.getLong(MovieGridFragment.FAVORED_AT) > 0;
         Picasso.with(context).load(posterPath).into(viewHolder.iv);
         viewHolder.iv.setContentDescription(title);
+        // Show that movie is favourite
+        if (isFavourite) {
+            viewHolder.favouriteImageView.setVisibility(View.VISIBLE);
+        } else {
+            viewHolder.favouriteImageView.setVisibility(View.INVISIBLE);
+        }
     }
 
     private class ViewHolder {
         ImageView iv;
+        ImageView favouriteImageView;
 
         ViewHolder(View v) {
             iv = (ImageView) v.findViewById(R.id.movie_poster);
+            favouriteImageView = (ImageView) v.findViewById(R.id.movie_favourite);
         }
     }
 }

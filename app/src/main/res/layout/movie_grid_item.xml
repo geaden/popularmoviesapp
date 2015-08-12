@@ -1,14 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content">
+    android:layout_width="match_parent"
+    android:foreground="@drawable/touch_selector"
+    android:layout_height="match_parent">
     <!-- Movie poster -->
     <ImageView
         android:id="@+id/movie_poster"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         tools:src="@drawable/poster"
-        android:scaleType="fitCenter"
-        android:layout_height="fill_parent"
+        android:scaleType="centerCrop"
+        android:layout_height="match_parent"
         android:adjustViewBounds="true"/>
-</RelativeLayout>
+    <!-- Movie favourite indicator -->
+    <ImageView
+        android:padding="@dimen/movie_favourite_padding"
+        android:id="@+id/movie_favourite"
+        android:src="@drawable/ic_favorite_red"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_gravity="bottom|end"
+        tools:visibility="visible" />
+</FrameLayout>

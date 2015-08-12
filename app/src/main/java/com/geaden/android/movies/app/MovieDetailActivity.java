@@ -2,7 +2,6 @@ package com.geaden.android.movies.app;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 
 /**
  * Movie detail activity.
@@ -15,10 +14,13 @@ public class MovieDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
         if (savedInstanceState == null) {
-            Bundle extras = getIntent().getExtras();
-            long movieId = extras.getLong(MovieDetailFragment.MOVIE_DETAIL_ID);
+            // Create the detail fragment and add it to the activity
+            // using a fragment transaction.
+            Bundle arguments = new Bundle();
+            arguments.putParcelable(MovieDetailFragment.MOVIE_DETAIL_URI, getIntent().getData());
+
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.detail_fragment, MovieDetailFragment.getInstance(movieId))
+                    .replace(R.id.detail_fragment, MovieDetailFragment.newInstance(arguments))
                     .commit();
         }
     }

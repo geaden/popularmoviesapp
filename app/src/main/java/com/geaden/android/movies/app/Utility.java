@@ -5,6 +5,10 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ListAdapter;
+import android.widget.ListView;
 
 import com.geaden.android.movies.app.sync.MovieSyncAdapter;
 
@@ -18,8 +22,11 @@ import java.util.Date;
  * @author Gennady Denisov
  */
 public class Utility {
+    private static final String BASE_TRAILER_URL = "http://www.youtube.com/watch?v=";
+
     /**
      * Gets preferred sort order from user settings
+     *
      * @param c the context to get SharedPreferences from
      * @return the preferred sort order
      */
@@ -31,7 +38,8 @@ public class Utility {
 
     /**
      * Formats a data according to format
-     * @param date the date to format. If null, then null is returned.
+     *
+     * @param date   the date to format. If null, then null is returned.
      * @param format the provided format
      * @return string representation of date according to the provided format
      */
@@ -45,21 +53,24 @@ public class Utility {
 
     /**
      * Gets the connection status
+     *
      * @param context the Context to get Preferences from
      * @return the connection status
      */
     @SuppressWarnings("ResourceType")
-    static public @MovieSyncAdapter.ConnectionStatus int getConnectionStatus(Context context) {
+    static public
+    @MovieSyncAdapter.ConnectionStatus
+    int getConnectionStatus(Context context) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         return sp.getInt(context.getString(R.string.pref_conn_status_key),
-                MovieSyncAdapter.CONNECTION_UNKOWN);
+                MovieSyncAdapter.CONNECTION_UNKNOWN);
     }
 
     /**
      * Returns true if the network is available or about to become available
      *
      * @param c Context used to the ConnectivityManager
-     * @return
+     * @return whether network currently available
      */
     static public boolean isNetworkAvailable(Context c) {
         ConnectivityManager cm = (ConnectivityManager) c.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -70,7 +81,8 @@ public class Utility {
 
     /**
      * Gets movie rating according to max allowed stars
-     * @param c the Context to get max stars from
+     *
+     * @param c       the Context to get max stars from
      * @param voteAvg average vote
      * @return normalized rating
      */
@@ -82,6 +94,7 @@ public class Utility {
 
     /**
      * Gets movie release date from provided date string
+     *
      * @param dateStr the date string
      * @return year as string
      */
@@ -90,5 +103,71 @@ public class Utility {
             return dateStr.split("-")[0];
         }
         return null;
+    }
+
+    /**
+     * Constructs trailer url by adding key to base trailer url
+     *
+     * @param key the key of trailer
+     * @return trailer URL
+     */
+    public static String getTrailerUrl(String key) {
+        return BASE_TRAILER_URL + key;
+    }
+
+    /**
+     * Sets ListView height dynamically based on the height of the items.
+     * http://blog.lovelyhq.com/setting-listview-height-depending-on-the-items/
+     *
+     * @param listView to be resized
+     * @return true if the listView is successfully resized, false otherwise
+     */
+    public static boolean setListViewHeightBasedOnItems(ListView listView) {
+
+        ListAdapter listAdapter = listView.getAdapter();
+        if (listAdapter != null) {
+
+            int numberOfItems = listAdapter.getCount();
+
+            // Get total height of all items.
+            int totalItemsHeight = 0;
+
+            float px = 320 * listView.getResources()
+                    .getDisplayMetrics().density;
+
+            for (int itemPos = 0; itemPos < numberOfItems; itemPos++) {
+                View item = listAdapter.getView(itemPos, null, listView);
+                item.measure(View.MeasureSpec.makeMeasureSpec((int) px,
+                                View.MeasureSpec.AT_MOST),
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                totalItemsHeight += item.getMeasuredHeight();
+            }
+
+            // Get total height of all item dividers.
+            int totalDividersHeight = listView.getDividerHeight() *
+                    (numberOfItems - 1);
+
+            // Set list height.
+            ViewGroup.LayoutParams params = listView.getLayoutParams();
+            params.height = totalItemsHeight + totalDividersHeight;
+            listView.setLayoutParams(params);
+            listView.requestLayout();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Sets movie sorting order
+     *
+     * @param ctx            the Context to get SharedPreferences
+     * @param sortOrderValue sorting order to be set
+     */
+    public static void setSortOrder(Context ctx, String sortOrderValue) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+        SharedPreferences.Editor ed = sp.edit();
+        ed.putString(ctx.getString(R.string.pref_sort_key), sortOrderValue);
+        ed.commit();
     }
 }
