@@ -17,6 +17,7 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.widget.SearchView;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -26,6 +27,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.Filter;
+import android.widget.FilterQueryProvider;
 import android.widget.GridView;
 import android.widget.TextView;
 
@@ -111,17 +114,27 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
         // Associate searchable configuration with the SearchView
         SearchManager searchManager =
                 (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
-        MenuItem searchItem = menu.findItem(R.id.search);
+        final MenuItem searchItem = menu.findItem(R.id.search);
         final SearchView searchView = (SearchView) searchItem.getActionView();
+        searchView.setQueryHint(getString(R.string.search_hint));
         searchView.setSearchableInfo(
                 searchManager.getSearchableInfo(getActivity().getComponentName()));
+        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
+            @Override
+            public boolean onClose() {
+                if (!TextUtils.isEmpty(searchView.getQuery())) {
+                    searchView.setQuery(null, true);
+                }
+                return true;
+            }
+        });
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 
             @Override
             public boolean onQueryTextChange(String query) {
-                onMovieSearchQueryChanged(query);
+                mMovieQuery = query;
+                getLoaderManager().restartLoader(MOVIES_LOADER, null, MovieGridFragment.this);
                 return true;
-
             }
 
             @Override
@@ -149,6 +162,15 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
         TextView emptyView = (TextView) rootView.findViewById(R.id.movies_empty);
         mMoviesGrid.setEmptyView(emptyView);
         mMoviesAdapter = new MoviesAdapter(getActivity(), null, 0);
+        // Set movie adapter filtering
+        mMoviesAdapter.setFilterQueryProvider(new FilterQueryProvider() {
+            @Override
+            public Cursor runQuery(CharSequence constraint) {
+                mMovieQuery = constraint.toString();
+                getLoaderManager().restartLoader(MOVIES_LOADER, null, MovieGridFragment.this);
+                return null;
+            }
+        });
         mMoviesGrid.setAdapter(mMoviesAdapter);
         mMovieGridItemClickListener = new MovieGridItemClickListener();
         mMoviesGrid.setOnItemClickListener(mMovieGridItemClickListener);
@@ -190,19 +212,9 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
         void onItemSelected(Uri movieUri);
     }
 
-    /**
-     * Performs query for list of movides
-     *
-     * @param query the query
-     */
-    private void onMovieSearchQueryChanged(String query) {
-        mMovieQuery = query;
-        getLoaderManager().restartLoader(MOVIES_LOADER, null, this);
-    }
-
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        getActivity().getSupportLoaderManager().initLoader(MOVIES_LOADER, null, this);
+        getLoaderManager().initLoader(MOVIES_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
     }
 
@@ -211,7 +223,6 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         sp.registerOnSharedPreferenceChangeListener(this);
         super.onResume();
-        getLoaderManager().restartLoader(MOVIES_LOADER, null, this);
     }
 
     @Override
@@ -356,7 +367,7 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
             mMoviesGrid.smoothScrollToPosition(mPosition);
             // Check if auto selection needed
             if (mAutoSelectMovie) {
-                mMoviesGrid.setSelection(mPosition);
+                mMoviesGrid.setItemChecked(mPosition, true);
                 Cursor c = mMoviesAdapter.getCursor();
                 if (c.moveToPosition(mPosition)) {
                     final long movieId = c.getLong(MOVIE_ID);
@@ -371,7 +382,11 @@ public class MovieGridFragment extends Fragment implements LoaderManager.LoaderC
                             }
                         }
                     };
-                    handler.sendEmptyMessage(WHAT);
+                    if (mMovieQuery == null) {
+                        // Auto select movie only if searching is not performed
+                        handler.sendEmptyMessage(WHAT);
+                    }
+
                 }
             }
         }

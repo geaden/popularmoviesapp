@@ -17,17 +17,15 @@
         android:orientation="horizontal">
         <fragment
             android:id="@+id/movie_grid_fragment"
-            android:layout_width="0dp"
+            android:layout_width="@dimen/movie_two_pane_grid_width"
             android:layout_height="match_parent"
             android:name="com.geaden.android.movies.app.MovieGridFragment"
             app:autoSelectMovie="true"
-            android:layout_weight="1"
             tools:layout="@layout/fragment_movies" />
         <!-- Movie detail container -->
         <FrameLayout
             android:id="@+id/movie_detail_container"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"/>
     </LinearLayout>
 

@@ -4,6 +4,7 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -37,6 +38,8 @@ import com.geaden.android.movies.app.adapters.ReviewsAdapter;
 import com.geaden.android.movies.app.adapters.TrailersAdapter;
 import com.geaden.android.movies.app.data.MovieContract;
 import com.squareup.picasso.Picasso;
+
+import java.text.DecimalFormat;
 
 /**
  * Movie detail fragment.
@@ -109,12 +112,29 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         return fragment;
     }
 
-    private Intent createShareMovieIntent(long extMovieId) {
+    /**
+     * Creates share intent. If movie has trailes then first trailer url will be share,
+     * otherwise movie url
+     *
+     * @param extMovieId the external movie URL to share
+     * @return {@link Intent} Sharing Intent
+     */
+    private Intent createShareIntent(long extMovieId) {
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
         shareIntent.setType("text/plain");
+        String urlToShare;
+        Cursor cursor = mTrailersAdapter.getCursor();
+        if (null != cursor
+                && cursor.getCount() > 0
+                && cursor.moveToFirst()) {
+            String trailerKey = cursor.getString(INDEX_TRAILER_KEY);
+            urlToShare = Utility.getTrailerUrl(trailerKey);
+        } else {
+            urlToShare = getMovieUrl(extMovieId);
+        }
         shareIntent.putExtra(Intent.EXTRA_TEXT, getString(
-                R.string.movie_share_string, getMovieUrl(extMovieId), MOVIE_SHARE_HASHTAG));
+                R.string.movie_share_string, urlToShare, MOVIE_SHARE_HASHTAG));
         return shareIntent;
     }
 
@@ -217,13 +237,6 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                 }
             }
         });
-        LayerDrawable layerDrawable = (LayerDrawable) mMovieRating.getProgressDrawable();
-        DrawableCompat.setTint(DrawableCompat.wrap(layerDrawable.getDrawable(0)),
-                getResources().getColor(R.color.movie_empty_star));
-        DrawableCompat.setTint(DrawableCompat.wrap(layerDrawable.getDrawable(1)),
-                getResources().getColor(R.color.movie_partial_star));
-        DrawableCompat.setTint(DrawableCompat.wrap(layerDrawable.getDrawable(2)),
-                getResources().getColor(R.color.movie_full_star));
         return rootView;
     }
 
@@ -289,7 +302,17 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                     mMovieOverview.setText(overview);
                     Picasso.with(getActivity()).load(posterPath).into(mMoviePoster);
                     mMoviePoster.setContentDescription(title);
-                    mMovieRating.setRating(Utility.getRating(getActivity(), voteAvg));
+                    float scaledRating = Utility.getRating(getActivity(), voteAvg);
+                    DecimalFormat decimalFormat = new DecimalFormat("#.#");
+                    scaledRating = Float.valueOf(decimalFormat.format(scaledRating));
+                    mMovieRating.setRating(scaledRating);
+                    LayerDrawable layerDrawable = (LayerDrawable) mMovieRating.getProgressDrawable();
+                    DrawableCompat.setTint(DrawableCompat.wrap(layerDrawable.getDrawable(0)),
+                            getResources().getColor(R.color.movie_empty_star));
+                    DrawableCompat.setTint(DrawableCompat.wrap(layerDrawable.getDrawable(1)),
+                            getResources().getColor(R.color.movie_partial_star));
+                    DrawableCompat.setTint(DrawableCompat.wrap(layerDrawable.getDrawable(2)),
+                            getResources().getColor(R.color.movie_full_star));
                     mMovieRatingNumber.setText(getString(R.string.movie_rating_number, voteAvg));
                     String releaseYear = Utility.getReleaseYear(releaseDate);
                     if (null != releaseDate) {
@@ -300,7 +323,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                     }
                     // If onCreateOptionsMenu has already happened, we need to update the share intent now.
                     if (mShareActionProvider != null) {
-                        mShareActionProvider.setShareIntent(createShareMovieIntent(ContentUris.parseId(mUri)));
+                        mShareActionProvider.setShareIntent(createShareIntent(ContentUris.parseId(mUri)));
                     }
 
                     AppCompatActivity activity = (AppCompatActivity) getActivity();
@@ -375,7 +398,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         MenuItem shareItem = menu.findItem(R.id.action_share);
         mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(shareItem);
         long extMovieId = cursor.getLong(MovieGridFragment.MOVIE_ID);
-        setShareIntent(createShareMovieIntent(extMovieId));
+        setShareIntent(createShareIntent(extMovieId));
     }
 
     @Override

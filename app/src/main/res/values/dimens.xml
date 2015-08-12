@@ -34,4 +34,6 @@
     <dimen name="movie_trailer_name_margin_start">4dp</dimen>
     <dimen name="movie_trailers_list_divider_height">1dp</dimen>
     <dimen name="movie_detail_release_date_holder_padding">4dp</dimen>
+
+    <dimen name="movie_two_pane_grid_width">300dp</dimen>
 </resources>

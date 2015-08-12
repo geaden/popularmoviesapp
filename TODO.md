@@ -1,11 +1,11 @@
 # Known issues 
 
 - [ ] Image placeholder for movies with no poster
-- [ ] Gapless gridview like in guidelines (almost there)
 - [ ] Adjust list item text size in table layout (300 is not enough)
 
 # Done
 
+- [x] Gapless gridview like in guidelines (almost there)
 - [x] Part of list view is visible (inside trailers/reviews)
 - [x] Share menu item is not shown in phone layout
 - [x] Selected movie id is not reseted on change sort order

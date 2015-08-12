@@ -131,11 +131,14 @@ public class Utility {
 
             // Get total height of all items.
             int totalItemsHeight = 0;
+
+            float px = 320 * listView.getResources()
+                    .getDisplayMetrics().density;
+
             for (int itemPos = 0; itemPos < numberOfItems; itemPos++) {
                 View item = listAdapter.getView(itemPos, null, listView);
-                float px = 320 * (listView.getResources().getDisplayMetrics().density);
                 item.measure(View.MeasureSpec.makeMeasureSpec((int) px,
-                        View.MeasureSpec.AT_MOST),
+                                View.MeasureSpec.AT_MOST),
                         View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
                 totalItemsHeight += item.getMeasuredHeight();
             }

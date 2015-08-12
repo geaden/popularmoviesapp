@@ -45,15 +45,15 @@
             android:orientation="horizontal">
             <RatingBar
                 android:id="@+id/movie_detail_rating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:numStars="@integer/movie_rating_stars"
                 android:stepSize="@string/movie_rating_step"
-                android:layout_width="wrap_content"
                 android:isIndicator="true"
                 android:layout_gravity="center_vertical"
                 android:layout_marginRight="@dimen/movie_detail_rating_bar_margin"
                 android:layout_marginEnd="@dimen/movie_detail_rating_bar_margin"
-                style="?android:attr/ratingBarStyleSmall"
-                android:layout_height="wrap_content" />
+                style="?android:attr/ratingBarStyleSmall" />
             <!-- Movie rating text -->
             <TextView
                 android:id="@+id/movie_detail_rating_number"
@@ -151,7 +151,7 @@
                 <ListView
                     android:id="@+id/movie_trailers_list"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="fill_parent"
                     android:scrollbars="none"
                     tools:listitem="@layout/list_trailer_item"
                     android:dividerHeight="@dimen/movie_trailers_list_divider_height"
@@ -187,7 +187,7 @@
                 <ListView
                     android:id="@+id/movie_reviews_list"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="fill_parent"
                     android:scrollbars="none"
                     tools:listitem="@layout/list_review_item"
                     android:dividerHeight="@dimen/movie_trailers_list_divider_height"
