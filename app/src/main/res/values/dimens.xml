@@ -22,7 +22,7 @@
 
     <!-- Movie grid -->
     <dimen name="movie_grid_column_width">150dp</dimen>
-    <dimen name="movie_grid_item_height">220dp</dimen>
+    <dimen name="movie_grid_item_height">200dp</dimen>
 
     <!-- Common size for empty lists in Detail View -->
     <dimen name="movie_empty_lists_size">14dp</dimen>

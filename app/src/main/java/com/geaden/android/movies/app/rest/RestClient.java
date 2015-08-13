@@ -19,6 +19,7 @@ import retrofit.converter.GsonConverter;
 public class RestClient {
     private final static String TMDB_API_KEY = "YourApiKeyHere";
 
+
     private static TmdbService sService;
 
     private static RestClient sInstanse;
