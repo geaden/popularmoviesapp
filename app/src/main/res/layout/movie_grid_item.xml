@@ -2,15 +2,16 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:foreground="@drawable/touch_selector"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:minHeight="@dimen/movie_grid_item_height"
+    android:foreground="@drawable/touch_selector">
     <!-- Movie poster -->
     <ImageView
         android:id="@+id/movie_poster"
         android:layout_width="match_parent"
+        android:layout_height="match_parent"
         tools:src="@drawable/poster"
         android:scaleType="centerCrop"
-        android:layout_height="match_parent"
         android:adjustViewBounds="true"/>
     <!-- Movie favourite indicator -->
     <ImageView

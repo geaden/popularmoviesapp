@@ -4,7 +4,6 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -38,8 +37,6 @@ import com.geaden.android.movies.app.adapters.ReviewsAdapter;
 import com.geaden.android.movies.app.adapters.TrailersAdapter;
 import com.geaden.android.movies.app.data.MovieContract;
 import com.squareup.picasso.Picasso;
-
-import java.text.DecimalFormat;
 
 /**
  * Movie detail fragment.
@@ -303,8 +300,6 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                     Picasso.with(getActivity()).load(posterPath).into(mMoviePoster);
                     mMoviePoster.setContentDescription(title);
                     float scaledRating = Utility.getRating(getActivity(), voteAvg);
-                    DecimalFormat decimalFormat = new DecimalFormat("#.#");
-                    scaledRating = Float.valueOf(decimalFormat.format(scaledRating));
                     mMovieRating.setRating(scaledRating);
                     LayerDrawable layerDrawable = (LayerDrawable) mMovieRating.getProgressDrawable();
                     DrawableCompat.setTint(DrawableCompat.wrap(layerDrawable.getDrawable(0)),
